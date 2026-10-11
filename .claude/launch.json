@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "sniffsite-dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 3000 },
+    { "name": "mock-services", "runtimeExecutable": "npm", "runtimeArgs": ["run", "mock"], "port": 4010 }
+  ]
+}

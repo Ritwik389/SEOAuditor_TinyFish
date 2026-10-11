@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+/* Tokens come from design.md. One deliberate deviation: design.md's body text (#999999) is 2.8:1 on white,
+   which fails WCAG AA, so readable secondary text uses --color-muted (#595959, 7:1). #999 stays for decoration only. */
+@theme {
+  --color-primary: #000000;
+  --color-ink: #000000;
+  --color-muted: #595959;
+  --color-faint: #999999;
+  --color-canvas: #ffffff;
+  --color-canvas-dark: #010120;
+  --color-hairline: #ebebeb;
+  --color-dark-soft: #26263a;
+  --color-dark-fill: #313641;
+  --color-on-dark-muted: #b4b4c8;
+  --color-orange: #fc4c02;
+  --color-magenta: #ef2cc1;
+  --color-periwinkle: #bdbbff;
+  --color-mint: #c8f6f9;
+
+  /* Semantic colours: design.md defines none and says to adopt framework defaults. */
+  --color-crit: #b42318;
+  --color-crit-bg: #fef3f2;
+  --color-high: #b54708;
+  --color-high-bg: #fff6ed;
+  --color-med: #8a6100;
+  --color-med-bg: #fffaeb;
+  --color-ok: #067647;
+  --color-ok-bg: #ecfdf3;
+  --color-info: #2b4acb;
+  --color-info-bg: #eef2ff;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-xs: 3.25px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+html {
+  font-feature-settings: "ss01";
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-weight: 500; }
+
+:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; border-radius: 2px; }
+.on-dark :focus-visible { outline-color: #fff; }
+
+/* Type scale (design.md) */
+.t-display-xxl { font-size: clamp(36px, 5.2vw, 60px); line-height: 1.1; letter-spacing: -0.03em; font-weight: 500; }
+.t-display-xl { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.2; letter-spacing: -0.02em; font-weight: 500; }
+.t-display-lg { font-size: 28px; line-height: 1.15; letter-spacing: -0.015em; font-weight: 500; }
+.t-display-md { font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; font-weight: 500; }
+.t-body-lg { font-size: 18px; line-height: 1.3; letter-spacing: -0.01em; }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+.on-dark .eyebrow { color: var(--color-on-dark-muted); }
+.mono-label { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.02em; }
+
+/* Components */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 8px 24px;
+  font-family: var(--font-mono); font-size: 14px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
+  border-radius: var(--radius-sm); border: 1px solid transparent; cursor: pointer; text-decoration: none;
+  transition: background-color 120ms, border-color 120ms; white-space: nowrap;
+}
+@media (min-width: 768px) { .btn { min-height: 36px; } }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #222; }
+.btn-outline { background: var(--color-canvas); color: var(--color-ink); border-color: #cfcfcf; border-radius: var(--radius-xs); }
+.btn-outline:hover:not(:disabled) { border-color: var(--color-ink); }
+.btn-mint { background: var(--color-mint); color: var(--color-ink); }
+.btn-ghost-dark { background: var(--color-dark-soft); color: #fff; }
+.btn-ghost-dark:hover { background: #34344f; }
+.btn-danger { background: var(--color-canvas); color: var(--color-crit); border-color: #f1b8b3; }
+.btn-sm { min-height: 32px; padding: 4px 12px; font-size: 12px; }
+
+.input {
+  width: 100%; min-height: 44px; padding: 10px 12px;
+  background: var(--color-canvas); color: var(--color-ink);
+  border: 1px solid #cfcfcf; border-radius: var(--radius-sm); font-size: 16px;
+}
+.input::placeholder { color: #767676; }
+.input:hover { border-color: #8a8a8a; }
+.input[aria-invalid="true"] { border-color: var(--color-crit); }
+
+.card { background: var(--color-canvas); border: 1px solid var(--color-hairline); border-radius: var(--radius-sm); }
+.card-dark { background: var(--color-canvas-dark); border: 1px solid var(--color-dark-soft); border-radius: var(--radius-sm); color: #fff; }
+.th, .td { position: relative; } /* keeps sr-only children inside horizontally scrolling table wrappers */
+.th { background: var(--color-hairline); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-muted); font-weight: 500; text-align: left; padding: 10px 12px; }
+.td { padding: 10px 12px; border-bottom: 1px solid var(--color-hairline); vertical-align: top; font-size: 14px; }
+
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: var(--radius-sm); border: 1px solid var(--color-hairline); background: var(--color-hairline); font-size: 12px; line-height: 18px; font-weight: 500; }
+.chip-mono { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* Scent-trail loader: three dots pulsing in sequence (mirrors the logo trail). */
+@keyframes trail { 0%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+.trail-dot { animation: trail 1.2s infinite ease-in-out; }
+.trail-dot:nth-child(2) { animation-delay: 0.18s; }
+.trail-dot:nth-child(3) { animation-delay: 0.36s; }
+@keyframes sweep { to { transform: rotate(360deg); } }
+.sweep { transform-origin: 19px 13px; animation: sweep 2.4s linear infinite; }
+
+.skip-link { position: absolute; left: -999px; top: 8px; background: #000; color: #fff; padding: 8px 12px; z-index: 100; }
+.skip-link:focus { left: 8px; }
+
+.prose-evidence { white-space: pre-wrap; word-break: break-word; font-family: var(--font-mono); font-size: 12px; line-height: 1.55; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+@page { margin: 14mm; }
+@media print {
+  body { background: #fff; font-size: 11.5pt; }
+  .no-print { display: none !important; }
+  .print-block { break-inside: avoid; }
+  a { color: inherit; text-decoration: none; }
+  .card { border-color: #ccc; }
+}
