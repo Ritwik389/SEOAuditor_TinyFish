@@ -3,7 +3,11 @@ import { Logo } from "@/components/brand/Logo";
 import { DemoBadge } from "@/components/ui";
 import { DEMO_SLUGS, getDemoReport } from "@/lib/demo/reports";
 
-export const metadata = { title: "Demo reports" };
+export const metadata = {
+  title: "Sample AI search visibility reports",
+  description: "Three sample audits showing how Sniffsite compares a page's copy, its extracted text and its search results.",
+  alternates: { canonical: "/demo" },
+};
 
 export default function DemoIndex() {
   return (

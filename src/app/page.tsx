@@ -1,9 +1,29 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Code2, FileSearch, MonitorCheck, Search, Stethoscope } from "lucide-react";
 import { HeroRibbon } from "@/components/HeroRibbon";
 import { Logo } from "@/components/brand/Logo";
+import { SITE_DESC, SITE_URL } from "@/lib/site";
 import { SeverityBadge, CheckBadge, DemoBadge } from "@/components/ui";
 
+const FAQ = [
+  ["What does Sniffsite audit?", "A single page and the search query it should be found for. Sniffsite compares what the page says, what an AI retrieval tool can extract from it, and what search results show, then reports the gaps as prioritized, evidence-linked findings."],
+  ["Is this a rank tracker?", "No. Results describe sampled retrieval evidence: one search and one fetch at a point in time. They are not guaranteed Google rankings or a statement about every crawler."],
+  ["Does it replace a technical SEO audit?", "It covers the technical signals that affect retrieval, such as metadata, headings, robots.txt, sitemaps and rendering differences, but focuses on how AI tools and search results see the page."],
+  ["Do I need API keys?", "Live audits use your own TinyFish key, and optionally a Gemini key, added on the Setup page and stored encrypted. Sample reports need no keys."],
+] as const;
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "SoftwareApplication", name: "Sniffsite", applicationCategory: "BusinessApplication", operatingSystem: "Web", description: SITE_DESC, url: SITE_URL },
+    { "@type": "FAQPage", mainEntity: FAQ.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) },
+  ],
+};
+const ICONS = [Search, FileSearch, MonitorCheck, Stethoscope];
+const STATS = [
+  ["3", "views of one page compared", "bg-mint"],
+  ["11", "audit stages, each with a visible state", "bg-periwinkle"],
+  ["100%", "of findings linked to their evidence", "bg-mint"],
+];
 const STEPS = [
   { n: "01", t: "Search", d: "TinyFish Search runs your target query and records which results come back, in what order, with which titles and snippets." },
   { n: "02", t: "Fetch", d: "TinyFish Fetch retrieves the live page and returns what a retrieval pipeline can extract: text, headings, metadata, links." },
@@ -14,6 +34,7 @@ const STEPS = [
 export default function Landing() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, "\u003c") }} />
       <div className="on-dark bg-canvas-dark text-white">
         <header className="mx-auto flex max-w-[1280px] items-center justify-between px-4 py-5 sm:px-8">
           <Link href="/" aria-label="Sniffsite home"><Logo tone="dark" size={30} /></Link>
@@ -27,12 +48,12 @@ export default function Landing() {
 
         <section id="main" className="mx-auto grid max-w-[1280px] items-center gap-10 px-4 pb-20 pt-10 sm:px-8 md:grid-cols-2 md:pb-24 md:pt-16">
           <div>
-            <p className="eyebrow">AI search visibility auditor</p>
-            <h1 className="t-display-xxl mt-4">Your website has a scent. Can AI find it?</h1>
-            <p className="t-body-lg mt-4 max-w-xl text-on-dark-muted">
+            <p className="eyebrow rise">AI search visibility auditor</p>
+            <h1 className="t-display-xxl rise rise-2 mt-4">Your website has a scent. <span className="grad-text">Can AI find it?</span></h1>
+            <p className="t-body-lg rise rise-3 mt-4 max-w-xl text-on-dark-muted">
               Sniffsite finds the gap between what your page says, what an AI retrieval tool can extract from it, and what search results reveal. Every finding points to the evidence behind it.
             </p>
-            <form action="/audit/new" method="get" className="mt-8 max-w-xl space-y-3" aria-label="Start an audit">
+            <form action="/audit/new" method="get" className="rise rise-4 mt-8 max-w-xl space-y-3" aria-label="Start an audit">
               <div>
                 <label htmlFor="hero-url" className="eyebrow">Page URL</label>
                 <input id="hero-url" name="url" type="url" required placeholder="https://example.com/pricing" className="input mt-1 border-dark-soft bg-dark-soft text-white placeholder:text-[#9a9ab4]" />
@@ -47,11 +68,35 @@ export default function Landing() {
               </div>
             </form>
           </div>
-          <HeroRibbon className="order-first mx-auto w-full max-w-[560px] md:order-none" />
+          <div className="order-first mx-auto w-full max-w-[560px] md:order-none">
+            <HeroRibbon className="w-full" />
+            <div className="card-dark rise rise-4 mt-2 space-y-2 p-4 text-sm" role="img" aria-label="Example: three views of one page disagree">
+              <p className="eyebrow">Sample scan · pricing page</p>
+              {[
+                ["Search", "found at #4", "text-mint"],
+                ["Fetch", "212 words extracted", "text-mint"],
+                ["Browser", "3 headings missing from Fetch", "text-[#ffb08a]"],
+              ].map(([k, v, c]) => (
+                <p key={k} className="flex items-center justify-between gap-3 border-t border-dark-soft pt-2 first-of-type:border-0"><span className="mono-label text-on-dark-muted">{k}</span><span className={c}>{v}</span></p>
+              ))}
+            </div>
+          </div>
         </section>
       </div>
 
+      <div className="grad-rule" aria-hidden="true" />
       <main>
+        <section className="mx-auto max-w-[1280px] px-4 pt-12 sm:px-8">
+          <ul className="grid gap-4 md:grid-cols-3">
+            {STATS.map(([n, l, bg]) => (
+              <li key={l} className={`${bg} rounded-sm p-8`}>
+                <p className="t-display-lg" style={{ fontSize: 44 }}>{n}</p>
+                <p className="mt-1 text-[#333]">{l}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <section className="mx-auto max-w-[1280px] px-4 py-16 sm:px-8 md:py-20">
           <p className="eyebrow">The problem</p>
           <h2 className="t-display-xl mt-3 max-w-3xl">A page can be readable and still not be found, or found and still be misread.</h2>
@@ -64,7 +109,7 @@ export default function Landing() {
               ["What AI tools can extract", "The title, headings, text, metadata and links a retrieval tool actually receives from the live page."],
               ["What search results reveal", "Whether the page appears for the query, where, and how its title and snippet compare to competing pages."],
             ].map(([t, d]) => (
-              <div key={t} className="card p-6">
+              <div key={t} className="card lift p-6">
                 <h3 className="t-display-md">{t}</h3>
                 <p className="mt-2 text-muted">{d}</p>
               </div>
@@ -77,13 +122,16 @@ export default function Landing() {
             <p className="eyebrow">How it works</p>
             <h2 className="t-display-xl mt-3">Search, Fetch, Verify, Diagnose.</h2>
             <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {STEPS.map((s) => (
-                <li key={s.n} className="card-dark p-6">
-                  <p className="eyebrow">Step {s.n}</p>
+              {STEPS.map((s, i) => {
+                const Icon = ICONS[i]!;
+                return (
+                <li key={s.n} className="card-dark lift p-6">
+                  <div className="flex items-center justify-between"><p className="eyebrow">Step {s.n}</p><Icon size={20} className="text-periwinkle" aria-hidden /></div>
                   <h3 className="t-display-md mt-3">{s.t}</h3>
                   <p className="mt-2 text-on-dark-muted">{s.d}</p>
                 </li>
-              ))}
+                );
+              })}
             </ol>
             <p className="mt-6 max-w-3xl text-sm text-on-dark-muted">Each endpoint has a different job. Browser is not run for decoration: it only runs when there is a concrete question to answer or you turn verification on.</p>
           </div>
@@ -124,12 +172,35 @@ export default function Landing() {
           </div>
         </section>
 
+        <section id="faq" className="mx-auto max-w-[1280px] px-4 py-16 sm:px-8 md:py-20">
+          <p className="eyebrow">FAQ</p>
+          <h2 className="t-display-xl mt-3">Questions about AI search visibility audits</h2>
+          <dl className="mt-8 grid gap-4 md:grid-cols-2">
+            {FAQ.map(([q, a]) => (
+              <div key={q} className="card p-6">
+                <dt className="t-display-md">{q}</dt>
+                <dd className="mt-2 text-muted">{a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
         <section className="border-y border-hairline bg-[#fafafa]">
           <div className="mx-auto max-w-[1280px] px-4 py-10 sm:px-8">
             <p className="eyebrow">What the results mean</p>
             <p className="mt-2 max-w-4xl text-[#333]">
               Results describe <strong className="font-medium">sampled retrieval evidence</strong>: one search request and one fetch at a point in time, from TinyFish’s network. They are not guaranteed universal AI rankings, Google rankings, or a statement about every crawler.
             </p>
+          </div>
+        </section>
+
+        <section className="on-dark bg-canvas-dark text-white">
+          <div className="mx-auto flex max-w-[1280px] flex-col items-start gap-6 px-4 py-16 sm:px-8 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="eyebrow flex items-center gap-2"><Code2 size={14} aria-hidden /> No guesswork</p>
+              <h2 className="t-display-xl mt-3 max-w-2xl">Find out what AI sees on your page, in one audit.</h2>
+            </div>
+            <Link href="/audit/new" className="btn btn-mint">Run an audit <ArrowRight size={16} aria-hidden /></Link>
           </div>
         </section>
       </main>

@@ -121,6 +121,19 @@ h1, h2, h3, h4 { font-weight: 500; }
 @keyframes sweep { to { transform: rotate(360deg); } }
 .sweep { transform-origin: 19px 13px; animation: sweep 2.4s linear infinite; }
 
+/* Landing motion: slow ribbon drift, staged rise-in. All disabled by the reduced-motion rule below. */
+@keyframes drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+.ribbon-fade { overflow: visible; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); }
+.ribbon-drift { animation: drift 8s ease-in-out infinite; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.rise-2 { animation-delay: 120ms; } .rise-3 { animation-delay: 240ms; } .rise-4 { animation-delay: 360ms; }
+.lift { transition: transform 160ms, border-color 160ms; }
+.lift:hover { transform: translateY(-3px); border-color: var(--color-ink); }
+.card-dark.lift:hover { border-color: var(--color-periwinkle); }
+.grad-text { background: linear-gradient(90deg, var(--color-orange), var(--color-magenta) 55%, var(--color-periwinkle)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.grad-rule { height: 3px; background: linear-gradient(90deg, var(--color-orange), var(--color-magenta), var(--color-periwinkle)); }
+
 .skip-link { position: absolute; left: -999px; top: 8px; background: #000; color: #fff; padding: 8px 12px; z-index: 100; }
 .skip-link:focus { left: 8px; }
 

@@ -9,8 +9,10 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const r = getDemoReport((await params).slug);
-  return { title: r ? `Demo: ${r.audit.label}` : "Demo" };
+  const { slug } = await params;
+  const r = getDemoReport(slug);
+  const d = DEMO_SLUGS.find((x) => x.slug === slug);
+  return { title: r ? `Demo: ${r.audit.label}` : "Demo", description: d?.blurb, alternates: { canonical: `/demo/${d?.slug ?? ""}` } };
 }
 
 export default async function DemoReport({ params }: { params: Promise<{ slug: string }> }) {
