@@ -131,7 +131,8 @@ export async function verifyWithAgent(apiKey: string, p: {
 }): Promise<{ payload: AgentPayload; runId: string; status: AgentRunStatus; requestId?: string }> {
   const objective = agentObjective(p.query);
   const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(new DOMException("Agent verification deadline reached", "TimeoutError")), p.deadlineMs ?? 120_000);
+  // The provider's 90-second execution limit excludes queue/startup time.
+  const timer = setTimeout(() => ctl.abort(new DOMException("Agent verification deadline reached", "TimeoutError")), p.deadlineMs ?? 180_000);
   const abort = () => ctl.abort(p.signal?.reason ?? new DOMException("Aborted", "AbortError"));
   p.signal?.addEventListener("abort", abort, { once: true });
   if (p.signal?.aborted) abort();

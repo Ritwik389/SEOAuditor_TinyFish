@@ -1,8 +1,8 @@
-# TraceSEO
+# SEOAuditor
 
-**Your website has a scent. Can AI find it?**
+**Can AI read and find your page?**
 
-TraceSEO is an evidence-first AI search visibility auditor built for the **TinyFish × AIMS-DTU** workshop. For a page and (ideally) the query it should be found for, it:
+SEOAuditor is an evidence-first AI search visibility auditor built for the **TinyFish × AIMS-DTU** workshop. For a page and (ideally) the query it should be found for, it:
 
 1. **Searches** with TinyFish Search: does the page appear for the query, where, with what title and snippet?
 2. **Fetches** with TinyFish Fetch: what can an AI-oriented retrieval pipeline actually extract (text, headings, metadata, links)?
@@ -13,16 +13,24 @@ Results describe **sampled retrieval evidence** (one search, one fetch, one mome
 
 ---
 
+## Public live demo
+
+[Open SEOAuditor](https://seo-auditor-five-woad.vercel.app/) — no sign-in, sign-up or personal API key needed. Live audits use server-held TinyFish and Gemini keys. Each browser keeps its latest 20 reports, with history filters, retries, deletion, JSON export and print/PDF. Keep the tab open during a run; export reports to keep or share them.
+
+Deep audits use Search, Fetch, Agent creation and Run Status (four TinyFish endpoints), plus optional Browser verification. Added features include an extraction/discovery matrix, query-term coverage, verbatim quote cards, prioritized fix plans and read-only Agent interaction checks. Provider failures are recorded honestly and collected evidence is preserved.
+
+The deployment uses `PUBLIC_DEMO_MODE=true` and the verified `GEMINI_MODEL=gemini-2.5-flash`. MongoDB is not required in public mode. [Deployment guide](docs/DEPLOYMENT.md) · [LinkedIn and X drafts](docs/LAUNCH-POSTS.md).
+
 ## Quick start
 
 ```bash
 npm install
-cp .env.example .env.local       # then fill in the values (see below)
+cp .env.example .env       # then fill in the values (see below)
 npm run dev                      # http://localhost:3000
 
 ```
 
-Set `MONGODB_URI` and `CREDENTIAL_ENCRYPTION_KEY` in `.env.local` (see below), open the site, **create an account**, and add your own TinyFish (and optionally Gemini) key on **Setup**.
+For the public demo, set `PUBLIC_DEMO_MODE=true`, `TINYFISH_API_KEY` and optionally `GEMINI_API_KEY` in `.env`, with `GEMINI_MODEL=gemini-2.5-flash`. Keys stay on the server. Set `PUBLIC_DEMO_MODE=false` to use the optional private account mode described below.
 
 | Command | What it does |
 | --- | --- |
@@ -37,7 +45,7 @@ Set `MONGODB_URI` and `CREDENTIAL_ENCRYPTION_KEY` in `.env.local` (see below), o
 
 ---
 
-## Accounts and who owns what
+## Optional private account mode (`PUBLIC_DEMO_MODE=false`)
 
 **Multi-user.** Anyone can create an account (email + password, hashed with scrypt). Each account has its **own audits, settings and API keys**, and sees nothing of anyone else's: every read and write is scoped by owner, other users get "not found", and keys are encrypted under a per-user binding. There is **no shared TinyFish or Gemini key**: each user pays their own provider usage. Set `SIGNUPS_ENABLED=false` to close registration.
 
@@ -45,9 +53,9 @@ Set `MONGODB_URI` and `CREDENTIAL_ENCRYPTION_KEY` in `.env.local` (see below), o
 
 ---
 
-## Credentials: how to get each one
+## Private mode credentials: how to get each one
 
-Users add their keys on the **Setup** page after signing in (these steps are also shown there). Keys are saved encrypted and used only for that user's audits.
+In private mode, users add their keys on the **Setup** page after signing in (these steps are also shown there). Keys are saved encrypted and used only for that user's audits.
 
 ### MongoDB Atlas (operator, required)
 
@@ -55,7 +63,7 @@ Users add their keys on the **Setup** page after signing in (these steps are als
 2. Create a database user with read/write on one database.
 3. Network Access: for Vercel allow `0.0.0.0/0` (dynamic IPs) and rely on a strong password; for a fixed server allow only its IP.
 4. Connect → Drivers → copy the `mongodb+srv://…` string.
-5. Set `MONGODB_URI` (and optionally `MONGODB_DB_NAME`, default `traceseo`) in the host environment, redeploy.
+5. Set `MONGODB_URI` (and optionally `MONGODB_DB_NAME`, default `sniffsite`) in the host environment, redeploy.
 6. Setup → **Test connection** (writes, reads back and deletes a probe document).
 
 Indexes and a schema-version marker are created automatically on first connection (`src/lib/db/mongo.ts`).
@@ -88,7 +96,7 @@ Generate an encryption key: `node -e "console.log(require('crypto').randomBytes(
 
 ## Environment variables
 
-See `.env.example` (placeholders only). Summary: `MONGODB_URI`, `MONGODB_DB_NAME`, `CREDENTIAL_ENCRYPTION_KEY` (required), `SESSION_SECRET`, `SIGNUPS_ENABLED`, `GEMINI_MODEL`, `APP_URL` (optional). TinyFish/Gemini keys are **not** environment variables. Test-only switches (`TRACESEO_STORE=memory`, `TRACESEO_ALLOW_PRIVATE_TARGETS`, `TINYFISH_*_URL`, `GEMINI_BASE_URL`, `TRACESEO_RATE_LIMIT_MULTIPLIER`) are ignored or inert when `NODE_ENV=production`.
+See `.env.example` (placeholders only). Summary: `MONGODB_URI`, `MONGODB_DB_NAME`, `CREDENTIAL_ENCRYPTION_KEY` (required), `SESSION_SECRET`, `SIGNUPS_ENABLED`, `GEMINI_MODEL`, `APP_URL` (optional). In private mode, TinyFish/Gemini keys are saved per account; in public mode they are server environment variables. Test-only switches (`SNIFFSITE_STORE=memory`, `SNIFFSITE_ALLOW_PRIVATE_TARGETS`, `TINYFISH_*_URL`, `GEMINI_BASE_URL`, `SNIFFSITE_RATE_LIMIT_MULTIPLIER`) must never be set in production. Provider endpoint URL overrides are honored by the HTTP clients.
 
 ---
 
@@ -137,7 +145,8 @@ Browser ──HTTPS──▶ Next.js (App Router)
 ## Demo mode vs live mode
 
 * **Demo** (`/demo`, public): three fictional pages (SaaS pricing, e-commerce product, B2B service). They run through the *same analysis engine* from canned inputs, and are labelled “Demo · sample data” everywhere. They are never produced by live calls and never mixed into live data.
-* **Live** (signed-in user with their own verified TinyFish key; needs the operator database): every audit makes real requests and stores what came back.
+* **Public live demo**: no account; real requests stream to the browser and reports are saved locally.
+* **Private live mode**: signed-in users use their own keys and MongoDB stores their reports.
 
 If credentials are missing you are offered **Configure integrations** and **Explore sample report**.
 
@@ -151,3 +160,7 @@ npm run test:e2e      # Playwright: needs Microsoft Edge installed (uses channel
 
 ```
 
+
+## Public demo checks
+
+`PLAYWRIGHT_CHANNEL=chrome npx playwright test --config=playwright.public.config.ts` exercises anonymous audits, four endpoint contributions, history, reload, export, print, cancellation, retry and mobile navigation. `npm test` currently passes 190 tests (the optional MongoDB integration test is skipped without its test connection).

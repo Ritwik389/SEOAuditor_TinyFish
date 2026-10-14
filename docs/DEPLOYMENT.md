@@ -4,7 +4,7 @@ The deployed SEOAuditor runs with `PUBLIC_DEMO_MODE=true`. It has no sign-in or 
 
 `POST /api/public-audits` runs the existing audit engine inside one streamed request (`maxDuration=300`). Each request has an isolated temporary workspace. NDJSON snapshots contain real stage states, evidence and findings. A browser-owned stream reader survives client-side navigation and saves the latest 20 reports in localStorage. History, filters, retry, delete, JSON export and print/PDF all work without an account. Keep the tab open while an audit runs; a full reload interrupts that run and presents a retryable report with collected evidence.
 
-Keys never enter the browser, snapshots, report exports or deployment source uploads. Query proposal uses live TinyFish Fetch and Gemini, with an explicitly inferred extracted-title suggestion when Gemini cannot respond. Provider failures preserve evidence and appear in partial reports. The request has a 270-second cleanup deadline; Agent runs also have their own 120-second deadline and cancellation. Public API routes keep the URL/DNS guard, origin checks, body limits and per-instance rate limiting.
+Keys never enter the browser, snapshots, report exports or deployment source uploads. Query proposal uses live TinyFish Fetch and Gemini, with an explicitly inferred extracted-title suggestion when Gemini cannot respond. Provider failures preserve evidence and appear in partial reports. The request has a 270-second cleanup deadline; Agent runs also have their own 180-second deadline and cancellation. Public API routes keep the URL/DNS guard, origin checks, body limits and per-instance rate limiting.
 
 Set `PUBLIC_DEMO_MODE=false` to restore private account mode described below. Private accounts and API routes remain protected; public mode does not expose saved account records or allow editing server keys.
 
@@ -43,7 +43,7 @@ Audits run inside `after()` on the creating request, with `maxDuration = 300` se
 * **Hobby**: the platform cap is lower; audits that include Browser verification may be cut off. Progress is persisted after every stage, so an interrupted audit is detected as stale after 6 minutes of silence and shown as failed with **Retry audit**. Prefer `verification: off/auto` on Hobby.
 * Self-hosting with `next start` has no such cap.
 
-The opt-in Agent check has a local 120-second deadline and requests a 90-second provider limit. Known active runs are cancelled on interruption; lifecycle evidence is persisted before parsing the result. Search and Fetch findings survive an Agent failure. Prefer Browser and Agent off for deployments with short function limits.
+The opt-in Agent check has a local 180-second deadline and requests a 90-second provider limit. Known active runs are cancelled on interruption; lifecycle evidence is persisted before parsing the result. Search and Fetch findings survive an Agent failure. Prefer Browser and Agent off for deployments with short function limits.
 
 ## 4. Data retention
 
