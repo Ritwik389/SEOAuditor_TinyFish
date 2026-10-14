@@ -1,27 +1,28 @@
 import Link from "next/link";
 import { ArrowRight, Code2, FileSearch, MonitorCheck, Search, Stethoscope } from "lucide-react";
-import { HeroRibbon } from "@/components/HeroRibbon";
 import { Logo } from "@/components/brand/Logo";
 import { SITE_DESC, SITE_URL } from "@/lib/site";
 import { SeverityBadge, CheckBadge, DemoBadge } from "@/components/ui";
+import { STAGES } from "@/lib/types";
+import { publicDemoEnabled } from "@/lib/public-demo";
 
 const FAQ = [
-  ["What does Sniffsite audit?", "A single page and the search query it should be found for. Sniffsite compares what the page says, what an AI retrieval tool can extract from it, and what search results show, then reports the gaps as prioritized, evidence-linked findings."],
+  ["What does SEOAuditor audit?", "A single page and the search query it should be found for. SEOAuditor compares what the page says, what an AI retrieval tool can extract from it, and what search results show, then reports the gaps as prioritized, evidence-linked findings."],
   ["Is this a rank tracker?", "No. Results describe sampled retrieval evidence: one search and one fetch at a point in time. They are not guaranteed Google rankings or a statement about every crawler."],
   ["Does it replace a technical SEO audit?", "It covers the technical signals that affect retrieval, such as metadata, headings, robots.txt, sitemaps and rendering differences, but focuses on how AI tools and search results see the page."],
-  ["Do I need API keys?", "Live audits use your own TinyFish key, and optionally a Gemini key, added on the Setup page and stored encrypted. Sample reports need no keys."],
+  ["Do I need API keys?", publicDemoEnabled() ? "No. The live demo uses server-held API keys. No account is needed, and your reports are saved in this browser." : "Live audits use your own TinyFish key, and optionally a Gemini key, added on the Setup page and stored encrypted. Sample reports need no keys."],
 ] as const;
 const JSON_LD = {
   "@context": "https://schema.org",
   "@graph": [
-    { "@type": "SoftwareApplication", name: "Sniffsite", applicationCategory: "BusinessApplication", operatingSystem: "Web", description: SITE_DESC, url: SITE_URL },
+    { "@type": "SoftwareApplication", name: "SEOAuditor", applicationCategory: "BusinessApplication", operatingSystem: "Web", description: SITE_DESC, url: SITE_URL },
     { "@type": "FAQPage", mainEntity: FAQ.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) },
   ],
 };
 const ICONS = [Search, FileSearch, MonitorCheck, Stethoscope];
 const STATS = [
-  ["3", "views of one page compared", "bg-mint"],
-  ["11", "audit stages, each with a visible state", "bg-periwinkle"],
+  ["4", "TinyFish endpoints in a deep audit", "bg-mint"],
+  [String(STAGES.length), "audit stages, each with a visible state", "bg-periwinkle"],
   ["100%", "of findings linked to their evidence", "bg-mint"],
 ];
 const STEPS = [
@@ -37,21 +38,21 @@ export default function Landing() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, "\u003c") }} />
       <div className="on-dark bg-canvas-dark text-white">
         <header className="mx-auto flex max-w-[1280px] items-center justify-between px-4 py-5 sm:px-8">
-          <Link href="/" aria-label="Sniffsite home"><Logo tone="dark" size={30} /></Link>
+          <Link href="/" aria-label="SEOAuditor home"><Logo tone="dark" size={30} /></Link>
           <nav aria-label="Primary" className="flex items-center gap-4 text-sm sm:gap-6">
             <a href="#how" className="hidden hover:underline sm:inline">How it works</a>
             <Link href="/demo" className="hover:underline">Demo reports</Link>
-            <Link href="/setup" className="hover:underline">Setup</Link>
-            <Link href="/audit/new" className="btn btn-ghost-dark btn-sm">Sign in</Link>
+            <Link href="/setup" className="hover:underline">{publicDemoEnabled() ? "Integrations" : "Setup"}</Link>
+            <Link href="/audit/new" className="btn btn-ghost-dark btn-sm">Run an audit</Link>
           </nav>
         </header>
 
         <section id="main" className="mx-auto grid max-w-[1280px] items-center gap-10 px-4 pb-20 pt-10 sm:px-8 md:grid-cols-2 md:pb-24 md:pt-16">
           <div>
             <p className="eyebrow rise">AI search visibility auditor</p>
-            <h1 className="t-display-xxl rise rise-2 mt-4">Your website has a scent. <span className="grad-text">Can AI find it?</span></h1>
+            <h1 className="t-display-xxl rise rise-2 mt-4">Can AI read and find your page?</h1>
             <p className="t-body-lg rise rise-3 mt-4 max-w-xl text-on-dark-muted">
-              Sniffsite finds the gap between what your page says, what an AI retrieval tool can extract from it, and what search results reveal. Every finding points to the evidence behind it.
+              SEOAuditor finds the gap between what your page says, what an AI retrieval tool can extract from it, and what search results reveal. Every finding points to the evidence behind it.
             </p>
             <form action="/audit/new" method="get" className="rise rise-4 mt-8 max-w-xl space-y-3" aria-label="Start an audit">
               <div>
@@ -69,7 +70,6 @@ export default function Landing() {
             </form>
           </div>
           <div className="order-first mx-auto w-full max-w-[560px] md:order-none">
-            <HeroRibbon className="w-full" />
             <div className="card-dark rise rise-4 mt-2 space-y-2 p-4 text-sm" role="img" aria-label="Example: three views of one page disagree">
               <p className="eyebrow">Sample scan · pricing page</p>
               {[
@@ -84,7 +84,7 @@ export default function Landing() {
         </section>
       </div>
 
-      <div className="grad-rule" aria-hidden="true" />
+      <div className="border-t border-hairline" aria-hidden="true" />
       <main>
         <section className="mx-auto max-w-[1280px] px-4 pt-12 sm:px-8">
           <ul className="grid gap-4 md:grid-cols-3">
@@ -101,7 +101,7 @@ export default function Landing() {
           <p className="eyebrow">The problem</p>
           <h2 className="t-display-xl mt-3 max-w-3xl">A page can be readable and still not be found, or found and still be misread.</h2>
           <p className="t-body-lg mt-4 max-w-3xl text-muted">
-            Three different views of one page rarely agree: the copy you wrote, the text an extraction pipeline gets, and the snippet a search result shows. Sniffsite collects each view from real tools and shows exactly where they diverge.
+            Three different views of one page rarely agree: the copy you wrote, the text an extraction pipeline gets, and the snippet a search result shows. SEOAuditor collects each view from real tools and shows exactly where they diverge.
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {[
@@ -214,9 +214,6 @@ export default function Landing() {
             <Link href="/audit/new" className="hover:text-ink">Run an audit</Link>
           </nav>
         </div>
-        <p aria-hidden="true" className="select-none whitespace-nowrap text-center font-medium leading-none text-hairline" style={{ fontSize: "clamp(64px, 19vw, 280px)", letterSpacing: "-0.05em" }}>
-          sniffsite
-        </p>
       </footer>
     </>
   );

@@ -12,12 +12,13 @@ import { sha256 } from "../security/crypto";
 import { validateTargetUrl } from "../security/ssrf";
 import { TinyFishError } from "../tinyfish/client";
 import { verifyInBrowser } from "../tinyfish/browser";
+import { verifyWithAgent } from "../tinyfish/agent";
 import { tfFetch } from "../tinyfish/fetch";
 import { tfSearch } from "../tinyfish/search";
 import { matchTarget } from "../url";
 import {
   SCHEMA_VERSION, STAGES,
-  type AuditDoc, type AuditStatus, type BrowserPayload, type EvidenceKind, type EvidenceRecord, type FetchPayload, type Finding,
+  type AgentPayload, type AuditDoc, type AuditStatus, type AuditSummary, type BrowserPayload, type EvidenceKind, type EvidenceRecord, type FetchPayload, type Finding,
   type LogEvent, type RobotsPayload, type SearchPayload, type SitemapPayload, type StageId, type StageRecord, type StageStatus,
 } from "../types";
 
@@ -25,17 +26,21 @@ export interface Deps {
   search: typeof tfSearch;
   fetch: typeof tfFetch;
   browser: typeof verifyInBrowser;
+  agent: typeof verifyWithAgent;
   siteFiles: typeof collectSiteFiles;
   /** All three resolve the OWNER's own credentials/settings; there is no shared deployment key. */
   provider: (ownerId: string) => Promise<AnalysisProvider | null>;
   apiKey: (ownerId: string) => Promise<string | null>;
   settings: (ownerId: string) => Promise<Settings>;
+  onUpdate?: () => Promise<void>;
+  signal?: AbortSignal;
 }
 
 export const defaultDeps: Deps = {
   search: tfSearch,
   fetch: tfFetch,
   browser: verifyInBrowser,
+  agent: verifyWithAgent,
   siteFiles: collectSiteFiles,
   provider: getAnalysisProvider,
   apiKey: (ownerId) => getCredential(ownerId, "tinyfish"),
@@ -78,10 +83,12 @@ class Run {
   ctl = new AbortController();
   cancelled = false;
   chain: Promise<unknown> = Promise.resolve();
-  calls = { search: 0, fetch: 0, browser: 0, gemini: 0 };
+  calls: AuditSummary["apiCalls"] = { search: 0, fetch: 0, browser: 0, gemini: 0 };
   private watcher?: ReturnType<typeof setInterval>;
 
-  constructor(public a: AuditDoc) {
+  constructor(public a: AuditDoc, private onUpdate?: () => Promise<void>) {
+    // Queued audits created by an older build may not yet contain new stages.
+    initialStages().forEach((s) => this.stages.set(s.stageId, s));
     a.stages.forEach((s) => this.stages.set(s.stageId, { ...s }));
     this.logs = [...a.log];
   }
@@ -101,7 +108,10 @@ class Run {
 
   flush(extra: Partial<AuditDoc> = {}) {
     const snapshot = { stages: STAGES.map((s) => this.stages.get(s.id)!), log: this.logs.slice(-300), ...extra };
-    this.chain = this.chain.then(() => patchAudit(this.a.auditId, snapshot)).catch((e) => log("error", "flush failed", { err: redact(e) }));
+    this.chain = this.chain.then(async () => {
+      await patchAudit(this.a.auditId, snapshot);
+      await this.onUpdate?.();
+    }).catch((e) => log("error", "flush failed", { err: redact(e) }));
     return this.chain;
   }
 
@@ -152,7 +162,10 @@ const SEARCH_LIMITS = [
 export async function runAudit(auditId: string, deps: Deps = defaultDeps): Promise<void> {
   if (!(await claimAudit(auditId))) return; // another invocation owns it, or it was cancelled before start
   const audit = (await getAudit(auditId, null))!;
-  const run = new Run(audit);
+  const run = new Run(audit, deps.onUpdate);
+  const abort = () => { run.cancelled = true; run.ctl.abort(new DOMException("cancelled", "AbortError")); };
+  deps.signal?.addEventListener("abort", abort, { once: true });
+  if (deps.signal?.aborted) abort();
   run.watchCancel();
   const settings = await deps.settings(audit.ownerId);
   const key = await deps.apiKey(audit.ownerId);
@@ -161,6 +174,7 @@ export async function runAudit(auditId: string, deps: Deps = defaultDeps): Promi
   let interrupted = false; // set when cancelled or crashed; normal completion writes its own final state
 
   try {
+    run.check();
     if (!key) {
       for (const s of STAGES) if (s.provider.startsWith("tinyfish")) run.stages.get(s.id)!.status = "waiting_config";
       run.note("audit", "error", "TinyFish API key is not configured.");
@@ -278,10 +292,10 @@ export async function runAudit(auditId: string, deps: Deps = defaultDeps): Promi
     let sitemap: { evidenceId: string; payload: SitemapPayload } | undefined;
     try {
       const sf = await deps.siteFiles(audit.targetUrl, run.ctl.signal);
-      const r = run.ev("robots", "seo_checks", { label: "robots.txt", endpoint: "GET {origin}/robots.txt (Sniffsite server, SSRF-guarded)", sourceUrl: sf.robots.url, request: { url: sf.robots.url }, payload: sf.robots, limitations: ["Fetched directly by Sniffsite, not by TinyFish. Rules are evaluated for the generic agent and a fixed list of AI crawler names only."] });
+      const r = run.ev("robots", "seo_checks", { label: "robots.txt", endpoint: "GET {origin}/robots.txt (SEOAuditor server, SSRF-guarded)", sourceUrl: sf.robots.url, request: { url: sf.robots.url }, payload: sf.robots, limitations: ["Fetched directly by SEOAuditor, not by TinyFish. Rules are evaluated for the generic agent and a fixed list of AI crawler names only."] });
       robots = { evidenceId: r.evidenceId, payload: sf.robots };
       if (sf.sitemap) {
-        const s = run.ev("sitemap", "seo_checks", { label: "Sitemap", endpoint: "GET sitemap (Sniffsite server, SSRF-guarded)", sourceUrl: sf.sitemap.url, request: { url: sf.sitemap.url }, payload: sf.sitemap, limitations: ["Only the first sitemap is read; sitemap indexes are not traversed; large files are truncated."] });
+        const s = run.ev("sitemap", "seo_checks", { label: "Sitemap", endpoint: "GET sitemap (SEOAuditor server, SSRF-guarded)", sourceUrl: sf.sitemap.url, request: { url: sf.sitemap.url }, payload: sf.sitemap, limitations: ["Only the first sitemap is read; sitemap indexes are not traversed; large files are truncated."] });
         sitemap = { evidenceId: s.evidenceId, payload: sf.sitemap };
       }
       await run.persistEvidence();
@@ -317,9 +331,53 @@ export async function runAudit(auditId: string, deps: Deps = defaultDeps): Promi
     }
     run.check();
 
-    // 10 — recommendations -------------------------------------------------------------------------------------------
+    // 10 — Agent checks content behind interactions, with a separately tracked provider run ------------------------------
+    let agent: { evidenceId: string; payload: AgentPayload } | undefined;
+    let agentState: NonNullable<AuditSummary["agent"]> = "skipped";
+    if (!audit.settings.agentVerification) {
+      await run.end("agent_verify", "skipped", "Agent interaction check was not selected for this audit.");
+    } else {
+      await run.start("agent_verify", "Opening relevant read-only page controls with TinyFish Agent…");
+      try {
+        const fetchComplete = !!fetchEv && !fetchEv.payload.error && !fetchEv.payload.textTruncated && !!fetchEv.payload.text.trim();
+        const o = await deps.agent(key, {
+          url: audit.targetUrl, query: queries[0]?.text, fetchText: fetchEv?.payload.text ?? "", fetchComplete, signal: run.ctl.signal,
+          onCall: (kind) => { run.calls[kind] = (run.calls[kind] ?? 0) + 1; },
+          onRun: async (event) => {
+            run.ev("agent_run", "agent_verify", {
+              label: `Agent run: ${event.payload.status}`, endpoint: event.endpoint, sourceUrl: audit.targetUrl,
+              request: { runId: event.payload.runId }, payload: event.payload,
+              metadata: { requestId: event.requestId, latencyMs: event.latencyMs },
+              limitations: ["The provider run state describes execution, not the accuracy of its extracted content.", ...(event.payload.status === "SUBMITTED" ? ["This is a create acknowledgment; the run status has not yet been polled."] : [])],
+            });
+            // Persist the ID immediately so an interrupted audit retains its provider trace.
+            await run.persistEvidence();
+            run.note("agent_verify", "info", `Provider run ${event.payload.runId}: ${event.payload.status}`);
+            await run.flush();
+          },
+        });
+        const rec = run.ev("agent", "agent_verify", {
+          label: "Agent: answers behind page interactions", endpoint: "POST agent.tinyfish.ai/v1/automation/run-async + GET agent.tinyfish.ai/v1/runs/{id}",
+          sourceUrl: audit.targetUrl, request: { url: audit.targetUrl, query: queries[0]?.text, browser_profile: "lite", max_duration_seconds: 90 }, payload: o.payload,
+          metadata: { runId: o.runId, status: o.status, requestId: o.requestId, fetchComparison: fetchComplete && o.payload.fetchComparison !== "unmeasured" ? "complete" : "unmeasured" },
+          limitations: ["Agent observations are model-produced and are not an independent DOM capture. Quotes are checked for containment in the Agent's own text sample.", "Only up to four relevant read-only controls are checked. Missing content here does not establish that all users or crawlers are blocked.", "Content absent from the Fetch sample may result from truncation, timing or personalization, as well as page interactions."],
+        });
+        agent = { evidenceId: rec.evidenceId, payload: o.payload };
+        agentState = "verified";
+        await run.persistEvidence();
+        const comparisonMessage = fetchComplete && o.payload.fetchComparison !== "unmeasured" ? `${o.payload.missingFromFetch.length} quote(s) absent from Fetch.` : "comparison to Fetch was not measured because its sample was unavailable or incomplete.";
+        await run.end("agent_verify", "completed", `Agent reported ${o.payload.interactions.length} interaction(s), ${o.payload.answers.length} answer(s); ${comparisonMessage}`);
+      } catch (e) {
+        if (run.cancelled) throw new Cancelled();
+        agentState = e instanceof TinyFishError && [402, 403, 404].includes(e.status) ? "unavailable" : "failed";
+        await run.end("agent_verify", "failed", agentState === "unavailable" ? "Agent verification is not available for this account." : friendly(e, "Agent verification failed; Search and Fetch evidence is retained."), errText(e));
+      }
+    }
+    run.check();
+
+    // 11 — recommendations -------------------------------------------------------------------------------------------
     await run.start("recommendations");
-    const det = analyzeDeterministic({ auditId, targetUrl: audit.targetUrl, queries, searches, fetch: fetchEv, browser, robots, sitemap });
+    const det = analyzeDeterministic({ auditId, targetUrl: audit.targetUrl, queries, searches, fetch: fetchEv, browser, agent, robots, sitemap });
     let findings: Finding[] = det.findings;
     let gaps = det.gaps;
     let extraction = det.extraction;
@@ -347,17 +405,18 @@ export async function runAudit(auditId: string, deps: Deps = defaultDeps): Promi
     if (semantic === "unavailable" && !provider) run.note("recommendations", "warn", "Semantic layer unavailable");
     run.check();
 
-    // 11 — save --------------------------------------------------------------------------------------------------------
+    // 12 — save --------------------------------------------------------------------------------------------------------
     await run.start("save");
     findings = prioritize(findings);
     const primarySearch = searches.find((s) => s.payload.query === queries[0]?.text);
-    const hasAnyEvidence = searches.length > 0 || (!!fetchEv && !fetchEv.payload.error);
+    const hasAnyEvidence = searches.length > 0 || (!!fetchEv && !fetchEv.payload.error) || !!agent;
     await replaceFindings(auditId, findings);
     const summary = {
       search: !queries.length ? ("not_run" as const) : primarySearch ? (primarySearch.payload.match ? ("found" as const) : ("not_found" as const)) : ("failed" as const),
       searchPosition: primarySearch?.payload.match?.position,
       fetch: !fetchEv ? ("failed" as const) : fetchEv.payload.error ? ("failed" as const) : ("ok" as const),
       browser: browserState,
+      agent: agentState,
       findingsCount: findings.length,
       topIssue: findings[0]?.title,
       firstAction: findings[0]?.recommendedAction,
@@ -390,12 +449,14 @@ export async function runAudit(auditId: string, deps: Deps = defaultDeps): Promi
       log("error", "audit crashed", { auditId, err: redact(e) });
     }
   } finally {
+    deps.signal?.removeEventListener("abort", abort);
     run.stopWatch();
     try { await run.persistEvidence(true); } catch { /* best effort */ }
     if (interrupted) {
       await run.flush();
       await patchAudit(auditId, { status, errorSummary, completedAt: new Date().toISOString(), currentStage: undefined });
     }
+    await deps.onUpdate?.();
   }
 }
 

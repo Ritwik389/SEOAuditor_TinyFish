@@ -26,7 +26,7 @@ export async function testTinyFishOperation(apiKey: string, operation: TfOperati
   const t0 = Date.now();
   try {
     if (operation === "search") {
-      const r = await tfSearch(apiKey, { query: "tinyfish web search api", purpose: "Sniffsite connection test" });
+      const r = await tfSearch(apiKey, { query: "tinyfish web search api", purpose: "SEOAuditor connection test" });
       return { operation, ok: true, message: `Search returned ${r.results.length} result(s).`, latencyMs: Date.now() - t0, requestId: r.requestId };
     }
     if (operation === "fetch") {

@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 import { MemoryDb, type Db } from "./memory";
 import { SCHEMA_VERSION } from "../types";
+import { demoDb } from "./demo-context";
 
 // Connection is configured by the deployment administrator through MONGODB_URI only.
 // It is deliberately NOT collectable through the website.
@@ -45,6 +46,8 @@ export function dbName(): string {
 }
 
 export async function getDb(): Promise<Db> {
+  const scoped = demoDb();
+  if (scoped) return scoped;
   const mode = storeMode();
   if (mode === "none") throw new StoreNotConfigured();
   if (mode === "memory") {

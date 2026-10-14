@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Banner, cx } from "@/components/ui";
+import { startPublicAudit } from "@/lib/public-audits";
 
 interface Q { text: string; source: "user" | "inferred"; rationale?: string }
 
-export function NewAuditForm({ initialUrl, initialQuery, ready, missing, geminiConfigured, defaults }: {
+export function NewAuditForm({ initialUrl, initialQuery, ready, missing, geminiConfigured, defaults, publicDemo = false }: {
   initialUrl: string; initialQuery: string; ready: boolean; missing: string[]; geminiConfigured: boolean;
   defaults: { verification: "off" | "auto" | "always"; location: string; language: string };
+  publicDemo?: boolean;
 }) {
   const router = useRouter();
   const [url, setUrl] = useState(initialUrl);
@@ -19,6 +21,7 @@ export function NewAuditForm({ initialUrl, initialQuery, ready, missing, geminiC
   const [location, setLocation] = useState(defaults.location);
   const [language, setLanguage] = useState(defaults.language);
   const [verification, setVerification] = useState(defaults.verification);
+  const [agentVerification, setAgentVerification] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formErr, setFormErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,7 +35,7 @@ export function NewAuditForm({ initialUrl, initialQuery, ready, missing, geminiC
     setProposalNote("");
     if (!url.trim()) return setErrors({ url: "Enter the page URL first so the page can be read." });
     setProposing(true);
-    const r = await fetch("/api/query-proposal", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url }) });
+    const r = await fetch(publicDemo ? "/api/public-query-proposal" : "/api/query-proposal", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url }) });
     const j = await r.json().catch(() => null);
     setProposing(false);
     if (!r.ok) return setProposalNote(j?.error?.message ?? "Could not propose a query.");
@@ -50,7 +53,13 @@ export function NewAuditForm({ initialUrl, initialQuery, ready, missing, geminiC
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setBusy(true);
-    const body = { url: url.trim(), label, location, language, verification, queries: queries.filter((q) => q.text.trim()).map((q) => ({ text: q.text.trim(), source: q.source, rationale: q.rationale })) };
+    const body = { url: url.trim(), label, location, language, verification, agentVerification, queries: queries.filter((q) => q.text.trim()).map((q) => ({ text: q.text.trim(), source: q.source, rationale: q.rationale })) };
+    if (publicDemo) {
+      try { router.push(`/audit/${await startPublicAudit(body)}`); }
+      catch (error) { setFormErr(error instanceof Error ? error.message : "Could not start the audit."); }
+      finally { setBusy(false); }
+      return;
+    }
     const r = await fetch("/api/audits", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const j = await r.json().catch(() => null);
     if (!r.ok) {
@@ -78,13 +87,13 @@ export function NewAuditForm({ initialUrl, initialQuery, ready, missing, geminiC
           <legend className="eyebrow">Target search query</legend>
           <div className="mt-1 flex gap-2">
             <input aria-label="Primary search query" value={queries[0]!.text} onChange={(e) => setQ(0, { text: e.target.value, source: "user", rationale: undefined })} placeholder="what someone would type to find this page" maxLength={300} className="input" aria-describedby="q-hint" />
-            <button type="button" onClick={propose} disabled={proposing || !ready || !geminiConfigured} className="btn btn-outline shrink-0" title={geminiConfigured ? "Reads the page and suggests a query" : "Needs Gemini (see Setup)"}>
+            <button type="button" onClick={propose} disabled={proposing || !ready || (!geminiConfigured && !publicDemo)} className="btn btn-outline shrink-0" title={publicDemo || geminiConfigured ? "Reads the page and suggests a query" : "Needs Gemini (see Setup)"}>
               <Sparkles size={15} aria-hidden /> {proposing ? "Reading…" : "Propose"}
             </button>
           </div>
           <p id="q-hint" className="mt-1 text-sm text-muted">
-            {inferred ? null : hasQuery ? "Used exactly as typed." : "Optional. Without a query, Sniffsite runs a fetch-only audit and skips search."}
-            {!geminiConfigured ? " Query proposals need Gemini; configure it on the Setup page." : ""}
+            {inferred ? null : hasQuery ? "Used exactly as typed." : "Optional. Without a query, SEOAuditor runs a fetch-only audit and skips search."}
+            {!geminiConfigured && !publicDemo ? " Query proposals need Gemini; configure it on the Setup page." : ""}
           </p>
           {inferred ? (
             <div className="mt-2 rounded-sm border border-[#c9d3f5] bg-info-bg p-3 text-sm" role="status">
@@ -144,12 +153,23 @@ export function NewAuditForm({ initialUrl, initialQuery, ready, missing, geminiC
           ))}
           <p className="mt-3 text-sm text-muted">Browser sessions can consume TinyFish wallet credit.</p>
         </fieldset>
+        <fieldset className="ui-card card p-4">
+          <legend className="eyebrow px-1">Agent interaction check</legend>
+          <label htmlFor="agent-verification" className="flex min-h-11 cursor-pointer items-start gap-3">
+            <input id="agent-verification" type="checkbox" checked={agentVerification} onChange={(e) => setAgentVerification(e.target.checked)} className="mt-1 shrink-0 accent-black" aria-describedby="agent-verification-hint" />
+            <span><span className="block text-[15px] font-medium">Inspect interactive content</span><span className="mt-1 block text-sm text-muted">Expand FAQs and tabs, compare visible answers with Fetch, and record the Agent run status.</span></span>
+          </label>
+          <p id="agent-verification-hint" className="mt-3 text-sm text-muted">Optional. Uses TinyFish wallet credits. The Agent observes public pages and read-only controls without submitting forms or signing in.</p>
+          {verification !== "always" || !agentVerification ? <button type="button" onClick={() => { setVerification("always"); setAgentVerification(true); }} className="ui-btn btn btn-outline btn-sm mt-3 w-full">Enable full verification</button> : <p role="status" className="mt-3 text-xs font-medium">Browser and Agent verification enabled.</p>}
+          <p className="mt-2 text-xs text-muted">With a search query, full verification uses Search, Fetch, Browser, Agent and run-status endpoints.</p>
+        </fieldset>
         <div className="card p-4 text-sm text-muted">
           <p className="font-medium text-ink">This audit will make at most</p>
           <ul className="mt-1 list-inside list-disc">
             <li>{queries.filter((q) => q.text.trim()).length} Search request(s)</li>
             <li>1 Fetch request</li>
             <li>{verification === "off" ? "0" : verification === "always" ? "1" : "0–1"} Browser session(s)</li>
+            <li>{agentVerification ? "1 Agent run plus provider status checks" : "0 Agent runs"}</li>
             <li>{geminiConfigured ? "1 Gemini analysis (plus 1 repair retry if needed)" : "no Gemini analysis (not configured)"}</li>
           </ul>
         </div>

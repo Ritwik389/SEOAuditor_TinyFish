@@ -23,8 +23,9 @@ export const CreateAuditSchema = z.object({
   location: z.preprocess(emptyToUndef, z.string().trim().regex(/^[A-Za-z]{2}$/, "Use a 2-letter country code").transform((s) => s.toUpperCase()).optional()),
   language: z.preprocess(emptyToUndef, z.string().trim().regex(/^[A-Za-z]{2,3}$/, "Use a 2-3 letter language code").transform((s) => s.toLowerCase()).optional()),
   verification: z.enum(["off", "auto", "always"]).default("auto"),
+  agentVerification: z.boolean().default(false),
 });
-export type CreateAuditInput = z.infer<typeof CreateAuditSchema>;
+export type CreateAuditInput = Omit<z.infer<typeof CreateAuditSchema>, "agentVerification"> & { agentVerification?: boolean };
 
 export async function createAuditFromInput(input: CreateAuditInput, ownerId: string, retryOf?: string): Promise<AuditDoc> {
   const u = await validateTargetUrl(input.url); // structural + DNS/private-range checks
@@ -40,7 +41,7 @@ export async function createAuditFromInput(input: CreateAuditInput, ownerId: str
     targetUrl: u.toString(),
     normalizedTargetUrl: normalizeUrl(u.toString()),
     queries,
-    settings: { location: input.location, language: input.language, verification: input.verification },
+    settings: { location: input.location, language: input.language, verification: input.verification, agentVerification: input.agentVerification ?? false },
     status: "queued",
     cancelRequested: false,
     createdAt: now,

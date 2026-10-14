@@ -140,9 +140,9 @@ export function SetupWizard({ initial, models, initialSettings }: { initial: Int
     <div className="space-y-6">
       {requiredOk ? <Banner tone="ok" title="Required integrations verified" action={<Link href="/audit/new" className="btn btn-primary btn-sm">Run an audit</Link>}>Database and TinyFish Search + Fetch passed real tests.{!gemOk ? " Gemini is not verified: reports will contain deterministic findings only." : ""}</Banner> : <Banner tone="warn" title="Setup is not complete">Live audits need a working database and your TinyFish Search + Fetch tests to pass. Complete steps 2 and 3 below, or <Link href="/demo" className="underline">explore sample reports</Link>.</Banner>}
 
-      <Step n={1} title="Welcome to Sniffsite" state="done">
+      <Step n={1} title="Welcome to SEOAuditor" state="done">
         <div className="flex gap-4"><LogoMark size={40} className="shrink-0" />
-          <p className="text-[15px] text-[#333]">Sniffsite runs a real search and a real fetch for your page, optionally verifies it in a browser, and then explains the gap between what your page says, what can be extracted, and what search shows. Gemini only interprets that evidence; it never replaces retrieval.</p></div>
+          <p className="text-[15px] text-[#333]">SEOAuditor runs a real search and a real fetch for your page, optionally verifies it in a browser, and then explains the gap between what your page says, what can be extracted, and what search shows. Gemini only interprets that evidence; it never replaces retrieval.</p></div>
       </Step>
 
       <Step n={2} title="Database" state={mongoOk ? "done" : "todo"}>
@@ -163,7 +163,7 @@ export function SetupWizard({ initial, models, initialSettings }: { initial: Int
             "Paste it above. It is saved encrypted and only your account can use it.",
             "Run the tests below and check which operations show as available.",
           ]} />
-            <p className="mt-3 text-sm text-muted">Per the docs, Search and Fetch are free within a daily allowance (about 12,000 searches and 1,000 URLs); Browser sessions draw from your wallet. Some operations can require an account entitlement: if a test reports “not enabled”, that is an account matter, not a Sniffsite bug.</p></div></details>
+            <p className="mt-3 text-sm text-muted">Per the docs, Search and Fetch are free within a daily allowance (about 12,000 searches and 1,000 URLs); Browser sessions draw from your wallet. Some operations can require an account entitlement: if a test reports “not enabled”, that is an account matter, not an SEOAuditor bug.</p></div></details>
         <div className="grid gap-2 sm:grid-cols-3">
           {([["search", "Search", tfSearchOk, "Free daily allowance"], ["fetch", "Fetch", tfFetchOk, "Free daily allowance"], ["browser", "Browser", tfBrowserOk, "Creates a billable session"]] as const).map(([op, name, ok, note]) => (
             <div key={op} className="rounded-sm border border-hairline p-3">

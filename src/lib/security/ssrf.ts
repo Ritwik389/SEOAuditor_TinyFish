@@ -160,7 +160,7 @@ export async function safeFetch(
       const lib = u.protocol === "https:" ? https : http;
       const req = lib.request(
         u,
-        { method: "GET", lookup: safeLookup as never, timeout: timeoutMs, headers: { "user-agent": "SniffsiteAuditBot/0.1 (+robots-and-sitemap-check)", accept: "text/plain,text/xml,application/xml,*/*;q=0.5" } },
+        { method: "GET", lookup: safeLookup as never, timeout: timeoutMs, headers: { "user-agent": "SEOAuditorBot/0.1 (+robots-and-sitemap-check)", accept: "text/plain,text/xml,application/xml,*/*;q=0.5" } },
         (r) => {
           const chunks: Buffer[] = [];
           let size = 0;

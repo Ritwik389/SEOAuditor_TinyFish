@@ -77,7 +77,7 @@ function build(spec: DemoSpec): ReportData {
   const extraction = det.extraction && { ...det.extraction, entities: v.entities.map(({ name, type, excerpt }) => ({ name, type, excerpt })) };
 
   const stages: StageRecord[] = STAGES.map((s, i) => {
-    const skipped = s.id === "browser_verify" && !browser;
+    const skipped = (s.id === "browser_verify" && !browser) || s.id === "agent_verify";
     return { stageId: s.id, label: s.label, provider: s.provider, status: skipped ? "skipped" : "completed", attempt: 1, evidenceIds: [], startedAt: at(i * 3), completedAt: at(i * 3 + 2), durationMs: 2000 + i * 150, message: skipped ? "No verification objective in this demo." : "Completed (demo)." };
   });
   const audit: AuditDoc = {

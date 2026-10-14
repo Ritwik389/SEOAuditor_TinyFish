@@ -10,12 +10,15 @@ import { requireUser } from "@/lib/security/auth";
 import { TERMINAL } from "@/lib/types";
 import { EmptyState } from "@/components/ui";
 import Link from "next/link";
+import { demoUser, publicDemoEnabled } from "@/lib/public-demo";
+import { PublicAuditView } from "@/components/PublicWorkspace";
 
 export const metadata = { title: "Audit" };
 export const dynamic = "force-dynamic";
 
 export default async function AuditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (publicDemoEnabled()) return <AppShell user={demoUser} publicDemo wide><PublicAuditView id={id} /></AppShell>;
   const user = await requireUser(`/audit/${id}`);
   let audit;
   try {

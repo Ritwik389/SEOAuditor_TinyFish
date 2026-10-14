@@ -14,7 +14,7 @@ const LINKS = [
   { href: "/demo", label: "Demo reports", icon: BookOpen },
 ];
 
-export function AppNav({ email }: { email: string }) {
+export function AppNav({ email, publicDemo = false }: { email: string; publicDemo?: boolean }) {
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -37,28 +37,28 @@ export function AppNav({ email }: { email: string }) {
               aria-current={active ? "page" : undefined}
               className={cx("flex min-h-11 items-center gap-3 rounded-sm px-3 text-[15px] md:min-h-9", active ? "bg-ink text-white" : "text-ink hover:bg-hairline")}
             >
-              <Icon size={16} aria-hidden /> {label}
+              <Icon size={16} aria-hidden /> {publicDemo && href === "/setup" ? "Integrations" : label}
             </Link>
           </li>
         );
       })}
-      <li>
+      {!publicDemo ? <li>
         <button onClick={logout} className="flex min-h-11 w-full items-center gap-3 rounded-sm px-3 text-left text-[15px] text-muted hover:bg-hairline md:min-h-9">
           <LogOut size={16} aria-hidden /> Sign out
         </button>
-      </li>
+      </li> : null}
     </ul>
   );
 
   return (
     <>
       <aside className="no-print sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-6 border-r border-hairline bg-canvas p-4 md:flex">
-        <Link href="/" aria-label="Sniffsite home" className="px-1 pt-1"><Logo size={26} /></Link>
+        <Link href="/" aria-label="SEOAuditor home" className="px-1 pt-1"><Logo size={26} /></Link>
         <nav aria-label="App">{list}</nav>
-        <p className="mono-label mt-auto break-all px-1 text-muted" title="Signed in as">{email}</p>
+        <p className="mono-label mt-auto break-all px-1 text-muted">{publicDemo ? "Live demo · no account needed" : email}</p>
       </aside>
       <div className="no-print sticky top-0 z-30 flex items-center justify-between border-b border-hairline bg-canvas px-4 py-2.5 md:hidden">
-        <Link href="/" aria-label="Sniffsite home"><Logo size={24} /></Link>
+        <Link href="/" aria-label="SEOAuditor home"><Logo size={24} /></Link>
         <button className="btn btn-outline btn-sm" aria-expanded={open} aria-controls="mobile-nav" onClick={() => setOpen(!open)}>
           {open ? <X size={16} aria-hidden /> : <Menu size={16} aria-hidden />}
           <span className="sr-only">{open ? "Close" : "Open"} menu</span>

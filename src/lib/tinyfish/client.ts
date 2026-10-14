@@ -6,6 +6,7 @@ export const TF_URLS = {
   search: () => process.env.TINYFISH_SEARCH_URL || "https://api.search.tinyfish.ai",
   fetch: () => process.env.TINYFISH_FETCH_URL || "https://api.fetch.tinyfish.ai",
   browser: () => process.env.TINYFISH_BROWSER_URL || "https://api.browser.tinyfish.ai",
+  agent: () => (process.env.TINYFISH_AGENT_URL || "https://agent.tinyfish.ai/v1").replace(/\/$/, ""),
 };
 
 export class TinyFishError extends Error {

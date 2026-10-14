@@ -22,7 +22,7 @@ export default async function DemoReport({ params }: { params: Promise<{ slug: s
     <>
       <header className="no-print border-b border-hairline">
         <div className="mx-auto flex max-w-[1280px] items-center justify-between px-4 py-4 sm:px-8">
-          <Link href="/" aria-label="Sniffsite home"><Logo size={26} /></Link>
+          <Link href="/" aria-label="SEOAuditor home"><Logo size={26} /></Link>
           <nav className="flex items-center gap-4 text-sm"><Link href="/demo" className="hover:underline">All demos</Link><Link href="/setup" className="btn btn-primary btn-sm">Configure integrations</Link></nav>
         </div>
       </header>

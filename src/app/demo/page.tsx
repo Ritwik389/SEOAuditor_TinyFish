@@ -2,10 +2,11 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { DemoBadge } from "@/components/ui";
 import { DEMO_SLUGS, getDemoReport } from "@/lib/demo/reports";
+import { LIVE_EXAMPLES, getLiveExample } from "@/lib/demo/live";
 
 export const metadata = {
   title: "Sample AI search visibility reports",
-  description: "Three sample audits showing how Sniffsite compares a page's copy, its extracted text and its search results.",
+  description: "Three sample audits showing how SEOAuditor compares a page's copy, its extracted text and its search results.",
   alternates: { canonical: "/demo" },
 };
 
@@ -14,7 +15,7 @@ export default function DemoIndex() {
     <>
       <header className="border-b border-hairline">
         <div className="mx-auto flex max-w-[1100px] items-center justify-between px-4 py-4 sm:px-8">
-          <Link href="/" aria-label="Sniffsite home"><Logo size={26} /></Link>
+          <Link href="/" aria-label="SEOAuditor home"><Logo size={26} /></Link>
           <nav className="flex items-center gap-4 text-sm"><Link href="/setup" className="hover:underline">Setup</Link><Link href="/audit/new" className="btn btn-primary btn-sm">Run an audit</Link></nav>
         </div>
       </header>
@@ -36,7 +37,23 @@ export default function DemoIndex() {
             );
           })}
         </ul>
-        <p className="mt-8 text-sm text-muted">Ready for the real thing? <Link href="/setup" className="underline">Configure integrations</Link> and run a live audit.</p>
+        <section className="mt-12 border-t border-hairline pt-8" aria-labelledby="live-examples-title">
+          <p className="ui-badge badge">Real TinyFish evidence</p>
+          <h2 id="live-examples-title" className="t-display-lg mt-3">Three real pages. Three different signals.</h2>
+          <p className="mt-3 max-w-3xl text-muted">Live Search and Fetch captures from 14 October 2026, analysed by the same engine. These dated, bounded captures can be opened without credentials; each has a fresh-audit action.</p>
+          <ul className="mt-6 grid gap-4 md:grid-cols-3">
+            {LIVE_EXAMPLES.map((c) => {
+              const r = getLiveExample(c.slug)!;
+              return <li key={c.slug} className="ui-card card"><div className="ui-card-body p-6">
+                <p className="eyebrow">{new URL(c.url).hostname}</p><h3 className="ui-card-title t-display-md">{c.title}</h3>
+                <p className="mono-label text-muted">Query: “{c.query}”</p>
+                <p className="mt-2 text-sm">{r.audit.summary?.search === "found" ? `Position #${r.audit.summary.searchPosition} in checked results` : "Absent from checked results"}</p>
+                <div className="ui-card-actions mt-3"><Link href={`/examples/${c.slug}`} className="ui-btn btn btn-primary w-full">Open capture</Link></div>
+              </div></li>;
+            })}
+          </ul>
+        </section>
+        <p className="mt-8 text-sm text-muted">Ready for a fresh audit? <Link href="/setup" className="underline">Configure integrations</Link> and audit any public URL.</p>
       </main>
     </>
   );

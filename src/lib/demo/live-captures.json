@@ -1,0 +1,431 @@
+[
+  {
+    "slug": "tinyfish-search",
+    "url": "https://docs.tinyfish.ai/search-api",
+    "query": "TinyFish Search API structured results",
+    "capturedAt": "2026-10-14T12:22:11Z",
+    "search": {
+      "query": "TinyFish Search API structured results",
+      "results": [
+        {
+          "position": 1,
+          "site_name": "www.tinyfish.ai",
+          "snippet": "TinyFish Search is a web search API returning fresh, structured results from the live web in milliseconds. Free on every plan, built for AI agents.",
+          "title": "Web Search API for AI Agents",
+          "url": "https://www.tinyfish.ai/search"
+        },
+        {
+          "position": 2,
+          "site_name": "docs.tinyfish.ai",
+          "snippet": "The TinyFish Search API lets you run web searches and get back structured results — titles, snippets, and URLs — ready for LLM consumption or programmatic use.",
+          "title": "Search API - TinyFish Web Agent",
+          "url": "https://docs.tinyfish.ai/search-api"
+        },
+        {
+          "date": "May 4, 2026",
+          "position": 3,
+          "site_name": "www.tinyfish.ai",
+          "snippet": "TinyFish Search and Fetch are free for every agent: 30 searches/min, 150 fetches/min, no credit card. Use the REST API, MCP, SDKs, or CLI.",
+          "title": "Search and Fetch are now FREE for every agent ...",
+          "url": "https://www.tinyfish.ai/blog/search-and-fetch-are-now-free-for-every-agent-everywhere"
+        },
+        {
+          "date": "Sep 29, 2026",
+          "position": 4,
+          "site_name": "www.tinyfish.ai",
+          "snippet": "TinyFish Search returns ranked URLs, titles, snippets, positions, and source metadata in structured JSON. Developers can filter results by ...",
+          "title": "Best Web Search API For AI Agents 2026",
+          "url": "https://www.tinyfish.ai/blog/best-web-search-api-for-ai-agents"
+        },
+        {
+          "date": "5 months ago",
+          "position": 5,
+          "site_name": "www.linkedin.com",
+          "snippet": "TinyFish just made their Search and Fetch APIs FREE! Search pulled structured JSON results very fast that is like sub half a second. It gave ...",
+          "title": "TinyFish APIs Now Free: Fast Search and Fetch Results",
+          "url": "https://www.linkedin.com/posts/arshgoyal_tinyfish-just-made-their-search-and-fetch-activity-7457111847813537792-azVU"
+        },
+        {
+          "position": 6,
+          "site_name": "www.reddit.com",
+          "snippet": "",
+          "title": "TinyFish Search + Fetch are free now — for anyone building agents",
+          "url": "https://www.reddit.com/r/AI_Agents/comments/1t3ob7y/tinyfish_search_fetch_are_free_now_for_anyone/"
+        },
+        {
+          "position": 7,
+          "site_name": "www.reddit.com",
+          "snippet": "",
+          "title": "We just made WEB Search and Fetch completely free",
+          "url": "https://www.reddit.com/r/SideProject/comments/1t3lmwn/we_just_made_web_search_and_fetch_completely_free/"
+        },
+        {
+          "position": 8,
+          "site_name": "www.reddit.com",
+          "snippet": "A full agent workflow with many slow searches becomes painful. The source details mention structured search results in under 500 milliseconds.",
+          "title": "How Tiny Fish AI Makes Agents Search The Web Fast",
+          "url": "https://www.reddit.com/r/AISEOInsider/comments/1t7a8lf/how_tiny_fish_ai_makes_agents_search_the_web_fast/"
+        },
+        {
+          "position": 9,
+          "site_name": "github.com",
+          "snippet": "Search api.search.tinyfish.ai, Fast, structured web search built for agents — JSON results, rank-stable across calls. Drop-in retrieval layer for any agent.",
+          "title": "tinyfish-io/tinyfish-cookbook: A collection of sample apps ...",
+          "url": "https://github.com/tinyfish-io/tinyfish-cookbook"
+        },
+        {
+          "date": "4 months ago",
+          "position": 10,
+          "site_name": "www.youtube.com",
+          "snippet": "TinyFish AI Review - (2026) I Tested an AI Agent That Browses Websites and Delivers Results. @Daniel-Dann1.2K likes34K views4 months ago",
+          "title": "TinyFish AI Review - (2026) I Tested an AI Agent That Browses ...",
+          "url": "https://www.youtube.com/watch?v=YDWNz2XzLTU"
+        }
+      ],
+      "total_results": 10,
+      "page": 0
+    },
+    "fetch": {
+      "url": "https://docs.tinyfish.ai/search-api",
+      "final_url": "https://docs.tinyfish.ai/search-api",
+      "title": "Search API - TinyFish Web Agent",
+      "description": "Search the web and get structured results via API",
+      "language": "en",
+      "text": "Search is free up to 12,000 requests per day. Beyond that, requests need a positive wallet balance.\n\nThe TinyFish Search API lets you run web searches and get back structured results — titles, snippets, and URLs — ready for LLM consumption or programmatic use.\n\n```\nGET https://api.search.tinyfish.ai\n```\n\n`api.search.tinyfish.ai` is the public Search API endpoint.\n\n##  Before You Start\n\n1\n\nGet your API key\n\nVisit agent.tinyfish.ai/api-keys and create a key. Store it in your environment:\n\n```\nexport TINYFISH_API_KEY=\"your_api_key_here\"\n```\n\nAll requests require the `X-API-Key` header. See Authentication for the full setup and troubleshooting guide.\n\n##  Your First Request\n\n```\nfrom tinyfish import TinyFish\n\nclient = TinyFish()\nresponse = client.search.query(query=\"web automation tools\")\nfor r in response.results:\n    print(r.title, \"→\", r.url)\n```\n\n```\nimport { TinyFish } from \"@tiny-fish/sdk\";\n\nconst client = new TinyFish();\nconst response = await client.search.query({ query: \"web automation tools\" });\nresponse.results.forEach((r) => console.log(r.title, \"→\", r.url));\n```\n\n```\ncurl \"https://api.search.tinyfish.ai?query=web+automation+tools\" \\\n  -H \"X-API-Key: $TINYFISH_API_KEY\"\n```\n\n##  What Success Looks Like\n\n```\n{\n  \"query\": \"web automation tools\",\n  \"results\": [\n    {\n      \"position\": 1,\n      \"site_name\": \"tinyfish.ai\",\n      \"title\": \"TinyFish — AI Web Automation Platform\",\n      \"snippet\": \"Automate any website with natural language instructions...\",\n      \"url\": \"https://tinyfish.ai\"\n    },\n    {\n      \"position\": 2,\n      \"site_name\": \"github.com\",\n      \"title\": \"Top Web Automation Tools in 2026\",\n      \"snippet\": \"A curated list of browser automation frameworks...\",\n      \"url\": \"https://github.com/example/web-automation-tools\"\n    }\n  ],\n  \"total_results\": 10,\n  \"page\": 0\n}\n```\n\n##  When to Use Search vs the Other APIs\n\n* Use **Search** when you need ranked search engine results, snippets, and URLs.\n* Use **Fetch** when you already have the URLs and want extracted page content.\n* Use **Agent** when you want TinyFish to browse and execute a workflow on the site.\n* Use **Browser** when you need direct browser control from your own code.\n\n---\n\n##  Geo-Targeted Results\n\nUse the `location` and `language` parameters to get results tailored to a specific region.\n\n\n---\n\n##  Freshness and Date Filters\n\nUse `recency_minutes` when you want a freshness windo",
+      "author": null,
+      "published_date": null,
+      "links": [
+        "https://docs.tinyfish.ai/llms.txt",
+        "https://docs.tinyfish.ai/search-api#content-area",
+        "https://agent.tinyfish.ai",
+        "https://agent.tinyfish.ai/api-keys",
+        "https://agent.tinyfish.ai/api-keys",
+        "https://docs.tinyfish.ai/",
+        "https://docs.tinyfish.ai/api-reference/automation/run-browser-automation-with-sse-streaming",
+        "https://github.com/tinyfish-io/tinyfish-cookbook",
+        "https://docs.tinyfish.ai/",
+        "https://docs.tinyfish.ai/quick-start",
+        "https://docs.tinyfish.ai/authentication",
+        "https://docs.tinyfish.ai/for-coding-agents",
+        "https://docs.tinyfish.ai/agent-api",
+        "https://docs.tinyfish.ai/agent-api/reference",
+        "https://docs.tinyfish.ai/agent-api/browser-context-profiles",
+        "https://docs.tinyfish.ai/key-concepts/endpoints",
+        "https://docs.tinyfish.ai/key-concepts/runs",
+        "https://docs.tinyfish.ai/key-concepts/goals",
+        "https://docs.tinyfish.ai/key-concepts/structured-output",
+        "https://docs.tinyfish.ai/prompting-guide",
+        "https://docs.tinyfish.ai/search-api",
+        "https://docs.tinyfish.ai/search-api/reference",
+        "https://docs.tinyfish.ai/search-api/examples",
+        "https://docs.tinyfish.ai/monitor",
+        "https://docs.tinyfish.ai/monitor/api-reference",
+        "https://docs.tinyfish.ai/fetch-api",
+        "https://docs.tinyfish.ai/fetch-api/reference",
+        "https://docs.tinyfish.ai/fetch-api/examples",
+        "https://docs.tinyfish.ai/browser-api",
+        "https://docs.tinyfish.ai/browser-api/reference"
+      ],
+      "latency_ms": 394.7692919973633,
+      "format": "markdown",
+      "page_metadata": {
+        "canonical": "https://docs.tinyfish.ai/search-api",
+        "favicon": "https://docs.tinyfish.ai/mintlify-assets/_mintlify/favicons/tinyfish/05k5zsm6ySkMI6wO/_generated/favicon/android-chrome-192x192.png",
+        "viewport": "width=device-width, initial-scale=1, viewport-fit=cover",
+        "generator": "Mintlify",
+        "og": {
+          "title": "Search API - TinyFish Web Agent",
+          "description": "Search the web and get structured results via API",
+          "url": "https://docs.tinyfish.ai/search-api",
+          "site_name": "TinyFish Web Agent",
+          "image": [
+            "https://tinyfish.mintlify.app/_mintlify/api/og/v2?division=Search+API&title=Search+API&description=Search+the+web+and+get+structured+results+via+API&theme=59891238df962a600b407092&signature=e16086eab283cb89aa65645a98c1dbd721bdd94f1c8b29207da2be816f32bdc9"
+          ],
+          "image:width": "1200",
+          "image:height": "630",
+          "type": "website"
+        },
+        "twitter": {
+          "card": "summary_large_image",
+          "title": "Search API - TinyFish Web Agent",
+          "description": "Search the web and get structured results via API",
+          "image": "https://tinyfish.mintlify.app/_mintlify/api/og/v2?division=Search+API&title=Search+API&description=Search+the+web+and+get+structured+results+via+API&theme=59891238df962a600b407092&signature=e16086eab283cb89aa65645a98c1dbd721bdd94f1c8b29207da2be816f32bdc9",
+          "image:width": "1200",
+          "image:height": "630"
+        },
+        "other": {
+          "application-name": "TinyFish Web Agent",
+          "msapplication-config": "/mintlify-assets/_mintlify/favicons/tinyfish/05k5zsm6ySkMI6wO/_generated/favicon/browserconfig.xml",
+          "apple-mobile-web-app-title": "TinyFish Web Agent",
+          "msapplication-tilecolor": "#D74B28"
+        }
+      },
+      "originalTextLength": 4109,
+      "textTruncated": true
+    }
+  },
+  {
+    "slug": "mdn-js",
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+    "query": "JavaScript language reference",
+    "capturedAt": "2026-10-14T12:22:11Z",
+    "search": {
+      "query": "JavaScript language reference",
+      "results": [
+        {
+          "date": "Sep 15, 2026",
+          "position": 1,
+          "site_name": "developer.mozilla.org",
+          "snippet": "The JavaScript reference serves as a repository of facts about the JavaScript language. The entire language is described here in detail.",
+          "title": "JavaScript reference - MDN Web Docs - Mozilla",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference"
+        },
+        {
+          "position": 2,
+          "site_name": "www.w3schools.com",
+          "snippet": "Well organized and easy to understand Web building tutorials with lots of examples of how to use HTML, CSS, JavaScript, SQL, Python, PHP, Bootstrap, Java, ...",
+          "title": "JavaScript Reference",
+          "url": "https://www.w3schools.com/jsref/jsref_reference.asp"
+        },
+        {
+          "date": "May 22, 2026",
+          "position": 3,
+          "site_name": "developer.mozilla.org",
+          "snippet": "The standards for JavaScript are the ECMAScript Language Specification (ECMA-262) and the ECMAScript Internationalization API specification ( ...",
+          "title": "JavaScript - MDN Web Docs - Mozilla",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript"
+        },
+        {
+          "date": "7 years ago",
+          "position": 4,
+          "site_name": "www.reddit.com",
+          "snippet": "javascript.info is a very comprehensive guide to the language and working in the browser, and unlike a lot of tutorials out there teaches you ...",
+          "title": "JavaScript reference guide : r/learnjavascript",
+          "url": "https://www.reddit.com/r/learnjavascript/comments/bjiwve/javascript_reference_guide/"
+        },
+        {
+          "position": 5,
+          "site_name": "www.w3schools.com",
+          "snippet": "Complete JavaScript References ; Primitives · String · Number ; Array · Boolean · Classes ; Window · History · Location ; Document · Element · Attributes ; Canvas.",
+          "title": "JavaScript and HTML DOM Referenc",
+          "url": "https://www.w3schools.com/jsrEF/default.asp"
+        },
+        {
+          "position": 6,
+          "site_name": "github.com",
+          "snippet": "The core language of JavaScript is standardized by the ECMA TC39 committee as a language named ECMAScript. \"ECMAScript\" is the term for the language standard,",
+          "title": "files - en-us - web - javascript - reference",
+          "url": "https://github.com/mdn/content/blob/main/files/en-us/web/javascript/reference/javascript_technologies_overview/index.md?plain=1"
+        },
+        {
+          "position": 7,
+          "site_name": "devdocs.io",
+          "snippet": "JavaScript API documentation with instant search, offline support, keyboard shortcuts, mobile version, and more. requires JavaScript to run.",
+          "title": "DevDocs — JavaScript documentation",
+          "url": "https://devdocs.io/javascript/"
+        },
+        {
+          "date": "Nov 7, 2025",
+          "position": 8,
+          "site_name": "developer.mozilla.org",
+          "snippet": "The JavaScript Guide shows you how to use JavaScript and gives an overview of the language. If you need exhaustive information about a language ...",
+          "title": "JavaScript Guide - MDN Web Docs - Mozilla",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide"
+        },
+        {
+          "position": 9,
+          "site_name": "en.wikipedia.org",
+          "snippet": "JavaScript (JS) is a programming language and core technology of the Web, alongside HTML and CSS. Created by Brendan Eich in 1995, it is maintained by Ecma ...",
+          "title": "JavaScript",
+          "url": "https://en.wikipedia.org/wiki/JavaScript"
+        },
+        {
+          "position": 10,
+          "site_name": "javascript.info",
+          "snippet": "Modern JavaScript Tutorial: simple, but detailed explanations with examples and tasks, including: closures, document and events, object oriented programming ...",
+          "title": "The Modern JavaScript Tutorial",
+          "url": "https://javascript.info/"
+        }
+      ],
+      "total_results": 10,
+      "page": 0
+    },
+    "fetch": {
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+      "final_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+      "title": "JavaScript | MDN",
+      "description": "JavaScript (JS) is a lightweight interpreted (or just-in-time compiled) programming language with first-class functions. While it is most well-known as the scripting language for Web pages, many non-browser environments also use it, such as Node.js, Apache CouchDB and Adobe Acrobat. JavaScript is a prototype-based, garbage-collected, dynamic language, supporting multiple paradigms such as imperative, functional, and object-oriented.",
+      "language": "en",
+      "text": "# JavaScript\n\n**JavaScript** (**JS**) is a lightweight interpreted (or just-in-time compiled) programming language with first-class functions. While it is most well-known as the scripting language for Web pages, many non-browser environments also use it, such as Node.js, Apache CouchDB and Adobe Acrobat. JavaScript is a prototype-based, garbage-collected, dynamic language, supporting multiple paradigms such as imperative, functional, and object-oriented.\n\nJavaScript's dynamic capabilities include runtime object construction, variable parameter lists, function variables, dynamic script creation (via `eval`), object introspection (via `for...in` and `Object` utilities), and source-code recovery (JavaScript functions store their source text and can be retrieved through `toString()`).\n\nThis section is dedicated to the JavaScript language itself, and not the parts that are specific to Web pages or other host environments. For information about APIs that are specific to Web pages, please see Web APIs and DOM.\n\nThe standards for JavaScript are the ECMAScript Language Specification (ECMA-262) and the ECMAScript Internationalization API specification (ECMA-402). As soon as one browser implements a feature, we try to document it. This means that cases where some proposals for new ECMAScript features have already been implemented in browsers, documentation and examples in MDN articles may use some of those new features. Most of the time, this happens between the stages 3 and 4, and is usually before the spec is officially published.\n\nDo not confuse JavaScript with the Java programming language — **JavaScript is *not* \"Interpreted Java\"**. Both \"Java\" and \"JavaScript\" are trademarks or registered trademarks of Oracle in the U.S. and other countries. However, the two programming languages have very different syntax, semantics, and use.\n\nJavaScript documentation of core language features (pure ECMAScript, for the most part) includes the following:\n\n* The JavaScript guide\n* The JavaScript reference\n\nFor more information about JavaScript specifications and related technologies, see JavaScript technologies overview.\n\n## Beginner's tutorials\n\nOur learn web development core modules contain modern, up-to-date tutorials covering JavaScript fundamentals.\n\n**Your first website: Adding interactivity**:   This article provides a brief tour of what JavaScript is and how to use it, ai",
+      "author": null,
+      "published_date": "2026-05-22T15:48:27.000Z",
+      "links": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript#content",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript#mdn-search",
+        "https://developer.mozilla.org/en-US/",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Reference",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Guides/Responsive_images",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Guides/Cheatsheet",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Guides/Date_and_time_formats",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Guides",
+        "https://developer.mozilla.org/en-US/docs/Web/SVG",
+        "https://developer.mozilla.org/en-US/docs/Web/MathML",
+        "https://developer.mozilla.org/en-US/docs/Web/XML",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Reference",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Box_model/Introduction",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Animations/Using",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Flexible_box_layout/Basic_concepts",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Colors/Applying_color",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/Guides",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/How_to/Layout_cookbook/Column_layouts",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/How_to/Layout_cookbook/Center_an_element",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/How_to/Layout_cookbook/Card",
+        "https://developer.mozilla.org/en-US/docs/Web/CSS/How_to/Layout_cookbook"
+      ],
+      "latency_ms": 733.5819470026763,
+      "format": "markdown",
+      "page_metadata": {
+        "canonical": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+        "favicon": "https://developer.mozilla.org/favicon.ico",
+        "viewport": "width=device-width, initial-scale=1.0",
+        "og": {
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+          "title": "JavaScript | MDN",
+          "locale": "en_US",
+          "description": "JavaScript (JS) is a lightweight interpreted (or just-in-time compiled) programming language with first-class functions. While it is most well-known as the scripting language for Web pages, many non-browser environments also use it, such as Node.js, Apache CouchDB and Adobe Acrobat. JavaScript is a prototype-based, garbage-collected, dynamic language, supporting multiple paradigms such as imperative, functional, and object-oriented.",
+          "image": [
+            "https://developer.mozilla.org/mdn-social-image.46ac2375.png"
+          ],
+          "image:type": "image/png",
+          "image:height": "1024",
+          "image:width": "1024",
+          "image:alt": "The MDN logo",
+          "site_name": "MDN Web Docs"
+        },
+        "twitter": {
+          "card": "summary",
+          "creator": "MozDevNet"
+        }
+      },
+      "originalTextLength": 5889,
+      "textTruncated": true
+    }
+  },
+  {
+    "slug": "example-domain",
+    "url": "https://example.com",
+    "query": "example domain",
+    "capturedAt": "2026-10-14T12:22:11Z",
+    "search": {
+      "query": "example domain",
+      "results": [
+        {
+          "position": 1,
+          "site_name": "example.com",
+          "snippet": "This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.",
+          "title": "Example Domain",
+          "url": "https://example.com/"
+        },
+        {
+          "position": 2,
+          "site_name": "en.wikipedia.org",
+          "snippet": "The domain names example.com, example.net, example.org, and example.edu are second-level domain names in the Domain Name System of the Internet.",
+          "title": "example.com",
+          "url": "https://en.wikipedia.org/wiki/Example.com"
+        },
+        {
+          "date": "Sep 27, 2026",
+          "position": 3,
+          "site_name": "www.iana.org",
+          "snippet": "A number of domains such as example.com and example.org are maintained for documentation purposes. These domains may be used as illustrative ...",
+          "title": "Example Domains",
+          "url": "https://www.iana.org/help/example-domains"
+        },
+        {
+          "position": 4,
+          "site_name": "it.cornell.edu",
+          "snippet": "Each college, school, and administrative unit has an approved third-part domain name, such as arts.cornell.edu. The unit may make its own rules for assigning ...",
+          "title": "Examples of Domain Names | IT@Cornell",
+          "url": "https://it.cornell.edu/dns/examples-domain-names"
+        },
+        {
+          "date": "Dec 20, 2021",
+          "position": 5,
+          "site_name": "news.ycombinator.com",
+          "snippet": "The advantage of example.com is that its still served over HTTP, which is very helpful if you are trying to force a redirect for wifi login or ' ...",
+          "title": "Example Domain",
+          "url": "https://news.ycombinator.com/item?id=29623646"
+        },
+        {
+          "date": "5 years ago",
+          "position": 6,
+          "site_name": "www.reddit.com",
+          "snippet": "TIL that example.com is an unregisterable domain, that was set up for anyone to be able to use for test data. r/todayilearned. • 17y ...",
+          "title": "Domain Names (.local vs. example.com) : r/activedirectory",
+          "url": "https://www.reddit.com/r/activedirectory/comments/kbty3e/domain_names_local_vs_examplecom/"
+        },
+        {
+          "date": "Apr 17, 2025",
+          "position": 7,
+          "site_name": "developers.google.com",
+          "snippet": "When you need a generic domain name in an example, use example.com, example.org, or example.net. These domains are reserved by the Internet ...",
+          "title": "Example domains and names",
+          "url": "https://developers.google.com/style/examples"
+        },
+        {
+          "position": 8,
+          "site_name": "study.com",
+          "snippet": "Video Summary for Web Domain ·.com - Originally for businesses but now widely used ·.org - Initially for nonprofits but now open to anyone ·.gov - Restricted ...",
+          "title": "Video: Web Domain | Definition & Examples",
+          "url": "https://study.com/academy/lesson/video/what-is-a-web-domain-definition-lesson-quiz.html"
+        },
+        {
+          "date": "Sep 24, 2024",
+          "position": 9,
+          "site_name": "laurens.io",
+          "snippet": "Instead of coming up with a “random” domain name, the solution is to use the IANA example domains example.com , example.org or example.net . Any ...",
+          "title": "Use a proper example domain — Laurens Groeneveld's blog",
+          "url": "https://laurens.io/blog/example-domain/"
+        },
+        {
+          "date": "5 years ago",
+          "position": 10,
+          "site_name": "www.youtube.com",
+          "snippet": "Know about example domains. example.com | example.org | example.net | example.edu Check out the article on our website for more details.",
+          "title": "Know about example domains",
+          "url": "https://www.youtube.com/watch?v=kXump59mXf4"
+        }
+      ],
+      "total_results": 10,
+      "page": 0
+    },
+    "fetch": {
+      "url": "https://example.com",
+      "final_url": "https://example.com",
+      "title": "Example Domain",
+      "description": null,
+      "language": "en",
+      "text": "This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.",
+      "author": null,
+      "published_date": null,
+      "links": [],
+      "latency_ms": 320.1072820011177,
+      "format": "markdown",
+      "page_metadata": {
+        "favicon": "data:,",
+        "viewport": "width=device-width,initial-scale=1"
+      },
+      "originalTextLength": 156,
+      "textTruncated": false
+    }
+  }
+]

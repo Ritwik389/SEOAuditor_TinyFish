@@ -5,6 +5,8 @@ import { listAudits } from "@/lib/db/repo";
 import { StoreNotConfigured } from "@/lib/db/mongo";
 import { requireUser } from "@/lib/security/auth";
 import type { AuditStatus } from "@/lib/types";
+import { demoUser, publicDemoEnabled } from "@/lib/public-demo";
+import { PublicHistory } from "@/components/PublicWorkspace";
 
 export const metadata = { title: "History" };
 export const dynamic = "force-dynamic";
@@ -12,6 +14,7 @@ export const dynamic = "force-dynamic";
 const STATUSES: AuditStatus[] = ["completed", "partial", "failed", "cancelled", "running", "queued", "waiting_config"];
 
 export default async function History({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  if (publicDemoEnabled()) return <AppShell user={demoUser} publicDemo><PublicHistory /></AppShell>;
   const user = await requireUser("/history");
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);

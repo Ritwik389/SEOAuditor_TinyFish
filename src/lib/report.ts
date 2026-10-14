@@ -1,4 +1,4 @@
-import type { AuditDoc, EvidenceRecord, BrowserPayload, FetchPayload, RobotsPayload, SearchPayload, SitemapPayload } from "./types";
+import type { AgentPayload, AgentRunPayload, AuditDoc, EvidenceRecord, BrowserPayload, FetchPayload, RobotsPayload, SearchPayload, SitemapPayload } from "./types";
 
 /** One-line, user-readable description of an evidence record (used in the live timeline). */
 export function evidenceBrief(e: EvidenceRecord): string {
@@ -14,6 +14,14 @@ export function evidenceBrief(e: EvidenceRecord): string {
     case "browser": {
       const p = e.normalizedPayload as BrowserPayload;
       return `${p.visibleTextLength.toLocaleString("en-US")} rendered chars · ${p.headings.length} headings · ${p.missingFromFetch.length} missing from Fetch`;
+    }
+    case "agent": {
+      const p = e.normalizedPayload as AgentPayload;
+      return `${p.interactions.length} interactions · ${p.missingFromFetch.length} content gaps · ${p.blockers.length} blockers observed`;
+    }
+    case "agent_run": {
+      const p = e.normalizedPayload as AgentRunPayload;
+      return `Run ${p.runId} · ${p.status}${p.steps === null ? "" : ` · ${p.steps} steps`}`;
     }
     case "robots": {
       const p = e.normalizedPayload as RobotsPayload;

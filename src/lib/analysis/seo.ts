@@ -108,7 +108,7 @@ export function runSeoChecks(i: SeoInput): TechnicalCheck[] {
   else if (s.listsTarget === null) out.push(chk("sitemap", "Sitemap discoverability", "unknown", s.isIndex ? "Sitemap index found; child sitemaps were not traversed." : "Sitemap could not be fully read.", se));
   else out.push(chk("sitemap", "Sitemap discoverability", "warning", `Sitemap found (${s.urlCount} URLs) but this URL is not listed.`, se));
 
-  out.push(chk("broken_links", "Broken links", "not_checked", "Links were not individually requested. Sniffsite does not test links in this version.", []));
+  out.push(chk("broken_links", "Broken links", "not_checked", "Links were not individually requested. SEOAuditor does not test links in this version.", []));
   return out;
 }
 

@@ -10,3 +10,9 @@ playwright-report
 .next-e2e
 e2e/.auth
 .next-shots
+artifacts/live-audits
+
+.env.*.local
+.vercel
+.next-*
+artifacts

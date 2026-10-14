@@ -9,6 +9,7 @@ export interface MockState {
   search: { status: number; body: unknown; failTimes: number; delayMs?: number };
   fetch: { status: number; body: unknown; failTimes: number; delayMs?: number };
   browser: { status: number; body: unknown };
+  agent: { status: number; runStatus: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED"; result: unknown; numOfSteps: number; error?: string; delayMs?: number };
   gemini: { status: number; text: string; auto?: boolean };
   requests: { method: string; path: string; headers: http.IncomingHttpHeaders; body: string }[];
 }
@@ -53,6 +54,12 @@ export const defaultMockState = (): MockState => ({
     },
   },
   browser: { status: 201, body: { session_id: "br-test-1", cdp_url: "wss://example.invalid/cdp", base_url: "https://example.invalid" } },
+  agent: { status: 200, runStatus: "COMPLETED", numOfSteps: 3, result: {
+    finalUrl: "__TARGET__", title: "Acme Metrics pricing",
+    visibleTextSample: "Acme Metrics pricing. Starter costs $29/mo and includes 10,000 events. Team costs $99/mo with unlimited dashboards. Team plans retain analytics events for 90 days.",
+    interactions: [{ control: "Team data retention FAQ", action: "Expanded FAQ accordion", result: "Retention period became visible" }],
+    answers: [{ question: "How long does Team retain events?", answer: "Team plans retain analytics events for 90 days.", quote: "Team plans retain analytics events for 90 days." }], blockers: [],
+  } },
   gemini: { status: 200, text: "{}" },
   requests: [],
 });
@@ -84,7 +91,7 @@ export async function startMock(port = 0): Promise<Mock> {
     };
     const err = (status: number, code: string, message: string, headers: Record<string, string> = {}) => send(status, { error: { code, message } }, headers);
 
-    if (url.pathname.startsWith("/search") || url.pathname.startsWith("/fetch") || url.pathname.startsWith("/browser")) {
+    if (url.pathname.startsWith("/search") || url.pathname.startsWith("/fetch") || url.pathname.startsWith("/browser") || url.pathname.startsWith("/agent/")) {
       state.requests.push({ method: req.method ?? "", path: url.pathname + url.search, headers: req.headers, body });
       if (req.headers["x-api-key"] !== state.apiKey) return err(401, "INVALID_API_KEY", "Invalid or expired API key");
     }
@@ -110,6 +117,12 @@ export async function startMock(port = 0): Promise<Mock> {
       res.writeHead(204);
       return res.end();
     }
+    if (url.pathname === "/agent/v1/automation/run-async" && req.method === "POST") {
+      if (state.agent.delayMs) await new Promise((r) => setTimeout(r, state.agent.delayMs));
+      return state.agent.status === 200 ? send(200, { run_id: "agent-test-1", status: "PENDING" }) : err(state.agent.status, "INTERNAL_ERROR", "agent unavailable");
+    }
+    if (url.pathname === "/agent/v1/runs/agent-test-1" && req.method === "GET") return send(200, { status: state.agent.runStatus, result: subst(state.agent.result, target, origin), num_of_steps: state.agent.numOfSteps, error: state.agent.error });
+    if (url.pathname === "/agent/v1/runs/agent-test-1/cancel" && req.method === "POST") return send(200, { status: "CANCELLED" });
     if (url.pathname.includes(":generateContent") || url.pathname.startsWith("/gemini/")) {
       state.requests.push({ method: req.method ?? "", path: url.pathname, headers: req.headers, body });
       if (!req.headers["x-goog-api-key"]) return err(403, "PERMISSION_DENIED", "no key");

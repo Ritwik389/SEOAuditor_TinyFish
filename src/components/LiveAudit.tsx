@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { AuditDoc, AuditStatus, LogEvent, StageRecord } from "@/lib/types";
+import type { AuditDoc, AuditStatus, LogEvent, StageRecord, ReportData } from "@/lib/types";
+import { cancelPublicAudit } from "@/lib/public-audits";
+import { evidenceBrief } from "@/lib/report";
 import { TERMINAL } from "@/lib/types";
 import { LogoLoader } from "./brand/Logo";
 import { ProgressBar, Timeline, useNow } from "./Timeline";
@@ -25,17 +27,23 @@ const WHAT_IS_HAPPENING: Record<string, string> = {
   fetch: "Fetch in progress: retrieving the live page and extracting its content.",
   seo_checks: "Reading robots.txt and the sitemap and running deterministic checks.",
   browser_verify: "Browser verification in progress: rendering the page in a remote browser. This can take 30–60 seconds.",
+  agent_verify: "Agent verification in progress: checking read-only controls and tracking the provider run status.",
   recommendations: "Generating recommendations from the collected evidence.",
   save: "Saving the report.",
 };
 
 /** Progress shown here is the persisted job state, polled from the server; nothing is simulated. */
-export function LiveAudit({ initial }: { initial: AuditDoc }) {
+export function LiveAudit({ initial, publicReport }: { initial: AuditDoc; publicReport?: ReportData }) {
   const router = useRouter();
-  const [ev, setEv] = useState<Events>({
+  const [storedEvents, setEv] = useState<Events>({
     status: initial.status, stages: initial.stages, log: initial.log, cancelRequested: initial.cancelRequested,
     startedAt: initial.startedAt ?? null, completedAt: initial.completedAt ?? null, evidence: [], errorSummary: null,
   });
+  const ev: Events = publicReport ? {
+    status: initial.status, stages: initial.stages, log: initial.log, cancelRequested: initial.cancelRequested,
+    startedAt: initial.startedAt ?? null, completedAt: initial.completedAt ?? null, errorSummary: initial.errorSummary ?? null,
+    evidence: publicReport.evidence.map((e) => ({ evidenceId: e.evidenceId, label: e.label, brief: evidenceBrief(e) })),
+  } : storedEvents;
   const [lost, setLost] = useState(0);
   const [cancelling, setCancelling] = useState(false);
   const done = useRef(false);
@@ -43,6 +51,7 @@ export function LiveAudit({ initial }: { initial: AuditDoc }) {
   const now = useNow(live);
 
   useEffect(() => {
+    if (publicReport) return;
     let stop = false;
     let timer: ReturnType<typeof setTimeout>;
     const failures = { n: 0 };
@@ -72,10 +81,11 @@ export function LiveAudit({ initial }: { initial: AuditDoc }) {
       stop = true;
       clearTimeout(timer);
     };
-  }, [initial.auditId, router]);
+  }, [initial.auditId, router, publicReport]);
 
   async function cancel() {
     setCancelling(true);
+    if (publicReport) { cancelPublicAudit(initial.auditId); return; }
     await fetch(`/api/audits/${initial.auditId}/cancel`, { method: "POST" });
   }
 

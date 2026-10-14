@@ -6,9 +6,11 @@ import type { BrowserPayload, EvidenceRecord, FetchPayload, Finding, GapAnalysis
 import { Logo } from "../brand/Logo";
 import { Timeline } from "../Timeline";
 import { AuditStatusBadge, Banner, CheckBadge, ConfidenceBadge, DemoBadge, EmptyState, ExtLink, SeverityBadge, cx, fmtDate, sevColor } from "../ui";
+import { AuditInsights } from "./AuditInsights";
 
 const SECTIONS = [
   ["summary", "Summary"],
+  ["insights", "AI readiness"],
   ["search", "Search"],
   ["fetch", "Extraction"],
   ["gap", "Gap analysis"],
@@ -174,6 +176,10 @@ export function ReportView({ report, print = false }: { report: ReportData; prin
           <p className="rounded-sm border border-hairline bg-[#fafafa] p-3 text-sm text-muted">These results describe sampled retrieval evidence from {summary?.apiCalls.search ?? 0} search request(s) and {summary?.apiCalls.fetch ?? 0} fetch request(s) at one point in time. They are not guaranteed universal AI rankings.</p>
         </Section>
 
+        <Section id="insights" title="AI readiness and visibility" eyebrow="Evidence into action">
+          <AuditInsights report={report} />
+        </Section>
+
         {/* ---------- 2. Search ---------- */}
         <Section id="search" title="Search visibility analysis" eyebrow="2 · Discovery">
           {audit.queries.length > 1 ? (
@@ -240,12 +246,13 @@ export function ReportView({ report, print = false }: { report: ReportData; prin
         <Section id="method" title="Limitations and methodology" eyebrow="8 · How to read this">
           <ul className="list-inside list-disc space-y-1.5 text-[15px] text-[#333]">
             <li><strong className="font-medium">Search</strong> is one request to TinyFish Search per query (one page of results). Position means order in that response, not a Google, Bing or universal AI ranking. A page missing from the sample is “Not found in checked results”, which does not mean “not indexed”.</li>
-            <li><strong className="font-medium">Fetch</strong> returns extracted Markdown plus metadata and links. HTTP status, response headers, JSON-LD and exact markup are not returned, so Sniffsite never infers them from text. TinyFish may serve a cached copy even when a live fetch is requested.</li>
+            <li><strong className="font-medium">Fetch</strong> returns extracted Markdown plus metadata and links. HTTP status, response headers, JSON-LD and exact markup are not returned, so SEOAuditor never infers them from text. TinyFish may serve a cached copy even when a live fetch is requested.</li>
             <li><strong className="font-medium">Browser</strong> runs only with a concrete verification objective or when you enable it. It is one session from TinyFish’s network and may differ from what other visitors see.</li>
-            <li><strong className="font-medium">robots.txt and sitemap</strong> are read directly by Sniffsite from the public site. Directives are declared preferences; compliance depends on each crawler.</li>
+            <li><strong className="font-medium">Agent interaction check</strong> is opt-in and observes read-only page interactions. Reported blockers and content differences are session observations. Agent run status evidence records provider execution separately from the extracted observations.</li>
+            <li><strong className="font-medium">robots.txt and sitemap</strong> are read directly by SEOAuditor from the public site. Directives are declared preferences; compliance depends on each crawler.</li>
             <li><strong className="font-medium">Deterministic checks</strong> are computed only from observed data. <strong className="font-medium">AI-interpreted findings</strong> are produced by a language model from the collected evidence, validated against a schema, and any excerpt that is not verbatim in the cited evidence is discarded.</li>
             <li>Broken links are not tested. A successful Fetch does not prove a page is indexable or readable by every AI tool.</li>
-            <li>Semantic analysis: <strong className="font-medium">{summary?.semanticAnalysis === "used" ? "used" : summary?.semanticAnalysis === "failed" ? "attempted, failed (deterministic findings only)" : "not used (deterministic findings only)"}</strong>. API calls made: search {summary?.apiCalls.search ?? 0}, fetch {summary?.apiCalls.fetch ?? 0}, browser {summary?.apiCalls.browser ?? 0}, Gemini {summary?.apiCalls.gemini ?? 0}.</li>
+            <li>Semantic analysis: <strong className="font-medium">{summary?.semanticAnalysis === "used" ? "used" : summary?.semanticAnalysis === "failed" ? "attempted, failed (deterministic findings only)" : "not used (deterministic findings only)"}</strong>. API calls made: search {summary?.apiCalls.search ?? 0}, fetch {summary?.apiCalls.fetch ?? 0}, browser {summary?.apiCalls.browser ?? 0}, Agent {summary?.apiCalls.agent ?? 0}, Agent run status {summary?.apiCalls.agentStatus ?? 0}, Gemini {summary?.apiCalls.gemini ?? 0}.</li>
           </ul>
         </Section>
       </article>
@@ -441,7 +448,7 @@ function ChecksTable({ checks }: { checks: TechnicalCheck[] }) {
 function FindingsBlock({ findings, print, status, hasEvidence }: { findings: Finding[]; print: boolean; status: string; hasEvidence: boolean }) {
   if (!findings.length) {
     return status === "failed" || !hasEvidence ? (
-      <EmptyState title="Insufficient evidence">No usable evidence was collected, so Sniffsite makes no findings rather than guessing. Check the activity log, then retry.</EmptyState>
+      <EmptyState title="Insufficient evidence">No usable evidence was collected, so SEOAuditor makes no findings rather than guessing. Check the activity log, then retry.</EmptyState>
     ) : (
       <EmptyState title="No findings">Nothing in the collected evidence met the threshold for a finding. That is not a guarantee of visibility: only the checks that ran are covered.</EmptyState>
     );
@@ -497,7 +504,7 @@ function EvidenceItem({ e, usedBy, open }: { e: EvidenceRecord; usedBy: string[]
           <Fact label="Requested">{e.query ? `Query “${e.query}”` : e.sourceUrl ?? "—"}</Fact>
           <Fact label="Content hash"><span className="mono-label">{e.contentHash.slice(0, 16)}…</span></Fact>
           <Fact label="Used by">{usedBy.length ? usedBy.join(", ") : "No finding or check cites this record"}</Fact>
-          <Fact label="Verification state">{e.sourceType === "browser" ? "Observed in a rendered page" : e.sourceType === "search" ? "Observed in a search response" : "Directly observed from the source"}</Fact>
+          <Fact label="Verification state">{e.sourceType === "browser" ? "Observed in a rendered page" : e.sourceType === "search" ? "Observed in a search response" : e.sourceType === "agent" ? "Agent session observation" : e.sourceType === "agent_run" ? "Provider execution status (not page content)" : "Directly observed from the source"}</Fact>
         </dl>
         <div><p className="eyebrow">Sanitized request and response metadata</p><pre className="prose-evidence mt-1 overflow-x-auto rounded-sm bg-[#fafafa] p-3">{json({ request: e.request, metadata: e.metadata })}</pre></div>
         <div><p className="eyebrow">Known limitations</p><ul className="mt-1 list-inside list-disc text-muted">{e.limitations.map((l) => <li key={l}>{l}</li>)}</ul></div>

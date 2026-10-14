@@ -1,4 +1,4 @@
-import type { BrowserPayload, ExtractionSummary, FetchPayload, Finding, GapAnalysis, QueryEntry, RobotsPayload, SearchPayload, SitemapPayload, TechnicalCheck } from "../types";
+import type { AgentPayload, BrowserPayload, ExtractionSummary, FetchPayload, Finding, GapAnalysis, QueryEntry, RobotsPayload, SearchPayload, SitemapPayload, TechnicalCheck } from "../types";
 import { buildGap } from "./compare";
 import { extractFromFetch } from "./extract";
 import { assignIds, buildDeterministicFindings } from "./findings";
@@ -11,6 +11,7 @@ export interface AnalysisInput {
   searches: { evidenceId: string; payload: SearchPayload }[];
   fetch?: { evidenceId: string; payload: FetchPayload };
   browser?: { evidenceId: string; payload: BrowserPayload };
+  agent?: { evidenceId: string; payload: AgentPayload };
   robots?: { evidenceId: string; payload: RobotsPayload };
   sitemap?: { evidenceId: string; payload: SitemapPayload };
 }

@@ -1,4 +1,47 @@
 @import "tailwindcss";
+@import "./fonts.css";
+
+/* Prefix component classes so the original application controls retain their styles. */
+@plugin "daisyui" {
+  themes: false;
+  prefix: ui-;
+  exclude: rootscrollgutter, rootcolor;
+  logs: false;
+}
+@plugin "daisyui/theme" {
+  name: "seo-auditor";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f7f7f8;
+  --color-base-300: #ebebeb;
+  --color-base-content: #000000;
+  --color-primary: #000000;
+  --color-primary-content: #ffffff;
+  --color-secondary: #bdbbff;
+  --color-secondary-content: #010120;
+  --color-accent: #c8f6f9;
+  --color-accent-content: #010120;
+  --color-neutral: #010120;
+  --color-neutral-content: #ffffff;
+  --color-info: #eef2ff;
+  --color-info-content: #2b4acb;
+  --color-success: #ecfdf3;
+  --color-success-content: #067647;
+  --color-warning: #fffaeb;
+  --color-warning-content: #8a6100;
+  --color-error: #fef3f2;
+  --color-error-content: #b42318;
+  --radius-selector: 0.25rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
 
 /* Tokens come from design.md. One deliberate deviation: design.md's body text (#999999) is 2.8:1 on white,
    which fails WCAG AA, so readable secondary text uses --color-muted (#595959, 7:1). #999 stays for decoration only. */
@@ -113,7 +156,7 @@ h1, h2, h3, h4 { font-weight: 500; }
 .badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: var(--radius-sm); border: 1px solid var(--color-hairline); background: var(--color-hairline); font-size: 12px; line-height: 18px; font-weight: 500; }
 .chip-mono { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
 
-/* Scent-trail loader: three dots pulsing in sequence (mirrors the logo trail). */
+/* Loading animation, retained for component compatibility. */
 @keyframes trail { 0%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
 .trail-dot { animation: trail 1.2s infinite ease-in-out; }
 .trail-dot:nth-child(2) { animation-delay: 0.18s; }
@@ -121,7 +164,7 @@ h1, h2, h3, h4 { font-weight: 500; }
 @keyframes sweep { to { transform: rotate(360deg); } }
 .sweep { transform-origin: 19px 13px; animation: sweep 2.4s linear infinite; }
 
-/* Landing motion: slow ribbon drift, staged rise-in. All disabled by the reduced-motion rule below. */
+/* Staged landing motion, disabled by the reduced-motion rule below. */
 @keyframes drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
 .ribbon-fade { overflow: visible; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); }
 .ribbon-drift { animation: drift 8s ease-in-out infinite; }

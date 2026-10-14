@@ -18,6 +18,7 @@ export const STAGES = [
   { id: "compare", label: "Comparing discovered information with extracted content", provider: "internal" },
   { id: "seo_checks", label: "Checking SEO and technical signals", provider: "internal" },
   { id: "browser_verify", label: "Verifying disputed findings in the browser", provider: "tinyfish-browser" },
+  { id: "agent_verify", label: "Checking content behind page interactions", provider: "tinyfish-agent" },
   { id: "recommendations", label: "Generating prioritized recommendations", provider: "gemini" },
   { id: "save", label: "Saving the final report", provider: "mongodb" },
 ] as const;
@@ -55,6 +56,8 @@ export interface AuditSettings {
   location?: string;
   language?: string;
   verification: VerificationMode;
+  /** Opt-in: an Agent run uses wallet credits and only opens read-only page controls. */
+  agentVerification?: boolean;
 }
 
 // ---- Normalized evidence payloads -------------------------------------------------
@@ -117,6 +120,31 @@ export interface BrowserPayload {
   missingFromFetch: string[];
 }
 
+/** Agent observations are model-produced, not independently captured browser DOM. */
+export interface AgentPayload {
+  requestedUrl: string;
+  finalUrl: string | null;
+  title: string;
+  visibleTextSample: string;
+  interactions: { control: string; action: string; result: string }[];
+  answers: { question: string; answer: string; quote: string }[];
+  blockers: string[];
+  missingFromFetch: string[];
+  objective: string;
+  observationsOnly: true;
+  /** Omission counts are meaningful only against a successful, complete Fetch sample. */
+  fetchComparison?: "complete" | "unmeasured";
+}
+
+export type AgentRunStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+export interface AgentRunPayload {
+  runId: string;
+  /** SUBMITTED records the create acknowledgment when it has no provider status. */
+  status: AgentRunStatus | "SUBMITTED";
+  steps: number | null;
+  error: string | null;
+}
+
 export interface RobotsPayload {
   url: string;
   status: number | null;
@@ -136,7 +164,7 @@ export interface SitemapPayload {
   error?: string;
 }
 
-export type EvidenceKind = "search" | "fetch" | "browser" | "robots" | "sitemap";
+export type EvidenceKind = "search" | "fetch" | "browser" | "agent" | "agent_run" | "robots" | "sitemap";
 export interface EvidenceRecord<P = unknown> {
   evidenceId: string;
   auditId: string;
@@ -229,10 +257,11 @@ export interface AuditSummary {
   searchPosition?: number;
   fetch: "ok" | "failed" | "not_run";
   browser: "verified" | "skipped" | "failed" | "unavailable";
+  agent?: "verified" | "skipped" | "failed" | "unavailable";
   findingsCount: number;
   topIssue?: string;
   firstAction?: string;
-  apiCalls: { search: number; fetch: number; browser: number; gemini: number };
+  apiCalls: { search: number; fetch: number; browser: number; gemini: number; agent?: number; agentStatus?: number; agentCancel?: number };
   semanticAnalysis: "used" | "unavailable" | "failed";
   extraction?: ExtractionSummary;
   gaps: GapAnalysis[];

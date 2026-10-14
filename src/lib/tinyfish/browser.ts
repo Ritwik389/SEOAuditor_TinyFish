@@ -1,4 +1,4 @@
-import { chromium } from "playwright-core";
+import type { Browser } from "playwright-core";
 import { TF_URLS, tfRequest } from "./client";
 import type { BrowserPayload } from "../types";
 
@@ -55,8 +55,9 @@ export async function verifyInBrowser(
   p: { url: string; objective: string; fetchText: string; signal?: AbortSignal; onAttempt?: (n: number) => void },
 ): Promise<{ payload: BrowserPayload; sessionId: string; requestId?: string }> {
   const { session, requestId } = await createSession(apiKey, { url: p.url, signal: p.signal, onAttempt: p.onAttempt });
-  let browser: Awaited<ReturnType<typeof chromium.connectOverCDP>> | undefined;
+  let browser: Browser | undefined;
   try {
+    const { chromium } = await import("playwright-core");
     browser = await chromium.connectOverCDP(session.cdp_url, { timeout: 45_000 });
     const ctx = browser.contexts()[0] ?? (await browser.newContext());
     const page = ctx.pages()[0] ?? (await ctx.newPage());

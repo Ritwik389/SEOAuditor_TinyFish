@@ -4,7 +4,9 @@ import { defineConfig, devices } from "@playwright/test";
 // and the in-memory (non-durable) store. No paid API and no real database is ever touched.
 // Uses the installed Microsoft Edge so no browser download is needed.
 const MOCK = 4020;
+const channel = process.env.PLAYWRIGHT_CHANNEL || "msedge";
 const env = {
+  PUBLIC_DEMO_MODE: "false",
   SNIFFSITE_STORE: "memory",
   SNIFFSITE_ALLOW_PRIVATE_TARGETS: "1",
   SNIFFSITE_RATE_LIMIT_MULTIPLIER: "10", // the suite signs up and audits a lot; real limits are covered by unit tests
@@ -13,6 +15,7 @@ const env = {
   TINYFISH_SEARCH_URL: `http://127.0.0.1:${MOCK}/search`,
   TINYFISH_FETCH_URL: `http://127.0.0.1:${MOCK}/fetch`,
   TINYFISH_BROWSER_URL: `http://127.0.0.1:${MOCK}/browser`,
+  TINYFISH_AGENT_URL: `http://127.0.0.1:${MOCK}/agent/v1`,
   GEMINI_BASE_URL: `http://127.0.0.1:${MOCK}/gemini`,
   // The server must work with NO shared keys: every user brings their own.
   TINYFISH_API_KEY: "",
@@ -28,14 +31,14 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   reporter: [["list"]],
-  use: { channel: "msedge", trace: "retain-on-failure", screenshot: "only-on-failure", baseURL: base },
+  use: { channel, trace: "retain-on-failure", screenshot: "only-on-failure", baseURL: base },
   projects: [
-    { name: "setup", use: { ...devices["Desktop Edge"], channel: "msedge" }, testMatch: /auth\.setup/ },
+    { name: "setup", use: { ...devices["Desktop Edge"], channel }, testMatch: /auth\.setup/ },
     // Tests that start from a signed-in account that already has its own keys:
-    { name: "desktop", dependencies: ["setup"], use: { ...devices["Desktop Edge"], channel: "msedge", storageState: "e2e/.auth/user.json" }, testMatch: /app\.spec/ },
-    { name: "mobile", dependencies: ["setup"], use: { ...devices["Pixel 7"], channel: "msedge", storageState: "e2e/.auth/user.json" }, testMatch: /mobile/ },
+    { name: "desktop", dependencies: ["setup"], use: { ...devices["Desktop Edge"], channel, storageState: "e2e/.auth/user.json" }, testMatch: /(app|insights)\.spec/ },
+    { name: "mobile", dependencies: ["setup"], use: { ...devices["Pixel 7"], channel, storageState: "e2e/.auth/user.json" }, testMatch: /mobile/ },
     // Tests that bring their own (anonymous / fresh) accounts:
-    { name: "accounts", dependencies: ["desktop"], use: { ...devices["Desktop Edge"], channel: "msedge" }, testMatch: /(auth|onboarding|isolation)\.spec/ },
+    { name: "accounts", dependencies: ["desktop"], use: { ...devices["Desktop Edge"], channel }, testMatch: /(auth|onboarding|isolation)\.spec/ },
   ],
   webServer: [
     { command: "npx tsx scripts/mock-services.mts", port: MOCK, env: { MOCK_PORT: String(MOCK) }, reuseExistingServer: false, timeout: 60_000 },

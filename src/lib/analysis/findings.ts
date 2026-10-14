@@ -1,5 +1,5 @@
-import { SCHEMA_VERSION, type Confidence, type Finding, type Severity, type TechnicalCheck, type GapAnalysis, type SearchPayload, type FetchPayload, type BrowserPayload, type RobotsPayload, type VerificationStatus } from "../types";
-import { clip } from "./text";
+import { SCHEMA_VERSION, type AgentPayload, type Confidence, type Finding, type Severity, type TechnicalCheck, type GapAnalysis, type SearchPayload, type FetchPayload, type BrowserPayload, type RobotsPayload, type VerificationStatus } from "../types";
+import { clip, containsExcerpt } from "./text";
 
 export interface DetInput {
   auditId: string;
@@ -7,6 +7,7 @@ export interface DetInput {
   searches: { evidenceId: string; payload: SearchPayload }[];
   fetch?: { evidenceId: string; payload: FetchPayload };
   browser?: { evidenceId: string; payload: BrowserPayload };
+  agent?: { evidenceId: string; payload: AgentPayload };
   robots?: { evidenceId: string; payload: RobotsPayload };
   checks: TechnicalCheck[];
   gaps: GapAnalysis[];
@@ -251,6 +252,35 @@ export function buildDeterministicFindings(i: DetInput): Draft[] {
       verificationMethod: "Re-run the audit; the missing-headings list should be empty.",
       verificationStatus: "confirmed",
     });
+  }
+
+  // Agent-reported text is a useful lead, but the Agent's own text sample is
+  // model-produced. It must not be promoted to an independent DOM confirmation.
+  const a = i.agent?.payload;
+  if (a && f && !f.error && !f.textTruncated && f.text.trim()) {
+    const fetchCorpus = `${f.title ?? ""}\n${f.description ?? ""}\n${f.text}`;
+    const seen = new Set<string>();
+    const missingAnswers = a.answers.filter((answer) => {
+      const quote = answer.quote.trim();
+      if (quote.length < 6 || seen.has(quote) || !a.visibleTextSample.includes(quote) || containsExcerpt(fetchCorpus, quote)) return false;
+      seen.add(quote);
+      return true;
+    }).slice(0, 3);
+    for (const answer of missingAnswers) {
+      const quote = answer.quote.trim();
+      out.push({
+        title: `Agent-reported answer missing from Fetch: ${clip(answer.question, 70)}`,
+        severity: "medium", confidence: "medium", category: "extraction", reportSection: "fetch",
+        explanation: `The interaction Agent reported an answer to "${answer.question}" and included the exact quoted passage in its own visible-text sample, but that passage was not found in the successful, untruncated Fetch output. Agent observations are model-produced, not an independently captured browser DOM; verify the live text before treating this as a confirmed extraction gap.`,
+        whyItMatters: "An answer revealed behind a disclosure or tab may be unavailable to retrieval tools that rely on the extracted page text.",
+        evidenceRefs: [i.fetch!.evidenceId, i.agent!.evidenceId],
+        excerpts: [{ evidenceId: i.agent!.evidenceId, text: quote }],
+        recommendedAction: `Confirm the live answer to "${clip(answer.question, 150)}", then keep that substantive answer in server-rendered HTML so extraction does not depend on opening an accordion or tab.`,
+        expectedOutcome: "A new Fetch result should include the confirmed answer. Search visibility and AI citation remain separate observations.",
+        verificationMethod: "Verify the quoted passage with an independent browser check, then re-run the audit and confirm it appears in Fetch text.",
+        verificationStatus: "needs_browser",
+      });
+    }
   }
   return out;
 }
