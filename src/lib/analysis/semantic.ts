@@ -53,7 +53,7 @@ Hard rules:
 {"gap":{"searchCommunicates":string,"pageExplains":string,"purposeMatch":"yes|partial|no|unclear","purposeRationale":string,"snippetOmissions":string[],"evidenceRefs":string[]},
  "entities":[{"name":string,"type":string,"excerpt":string,"evidenceId":string}],
  "findings":[{"title":string,"severity":"low|medium|high","confidence":"low|medium|high","category":"messaging|relevance|entities|content-gaps|competitor-comparison|copy","explanation":string,"whyItMatters":string,"evidenceRefs":string[],"excerpts":[{"evidenceId":string,"text":string}],"recommendedAction":string,"suggestedImplementation":string,"expectedOutcome":string,"verificationMethod":string,"verificationStatus":"observed|potential|needs_browser|unverified"}]}
-Give at most 6 findings, most important first. suggestedImplementation should be concrete replacement copy or code when helpful.`;
+Give at most 6 findings, most important first. Cite each evidence ID only once per reference list (at most 8 for gap, 6 per finding). Keep gap strings under 700 characters, explanations under 900, actions under 700, implementation under 1200, excerpts under 400. suggestedImplementation should be concrete replacement copy or code when helpful.`;
 
 // ---- Evidence packing ----------------------------------------------------------------------
 
@@ -81,7 +81,7 @@ export function evidenceCorpus(ev: EvidenceRecord[]): Map<string, string> {
 }
 
 export function packEvidence(ev: EvidenceRecord[], query: string): string {
-  const parts: string[] = [`Target query: ${JSON.stringify(query)}`];
+  const parts: string[] = [`Target query: ${JSON.stringify(query)}`, `Available citation IDs: ${JSON.stringify([...evidenceCorpus(ev).keys()])}`];
   for (const e of ev) {
     if (e.sourceType === "search") {
       const p = e.normalizedPayload as SearchPayload;
@@ -113,7 +113,7 @@ function parseJson(text: string): unknown {
 
 export async function runSemanticAnalysis(
   provider: AnalysisProvider,
-  p: { auditId: string; query: string; evidence: EvidenceRecord[]; signal?: AbortSignal },
+  p: { auditId: string; query: string; evidence: EvidenceRecord[]; signal?: AbortSignal; onCall?: () => void },
 ): Promise<{ output: SemanticOutput; findings: Finding[]; calls: number; dropped: number }> {
   const user = packEvidence(p.evidence, p.query);
   let calls = 0;
@@ -121,13 +121,24 @@ export async function runSemanticAnalysis(
   let lastError = "";
   for (let attempt = 0; attempt < 2 && !parsed; attempt++) {
     calls++;
+    p.onCall?.();
     const raw = await provider.generateJson({
       system: SYSTEM,
       user: attempt === 0 ? user : `${user}\n\nYour previous reply was invalid (${lastError}). Reply again with ONLY valid JSON in the required shape.`,
       signal: p.signal,
     });
     try {
-      const r = SemanticSchema.safeParse(parseJson(raw));
+      const value = parseJson(raw);
+      // Gap citations are optional metadata. Discard unknown/duplicate IDs
+      // before the size check; prose and findings still face the strict schema.
+      if (value && typeof value === "object" && "gap" in value) {
+        const gap = value.gap;
+        if (gap && typeof gap === "object" && "evidenceRefs" in gap && Array.isArray(gap.evidenceRefs)) {
+          const known = evidenceCorpus(p.evidence);
+          gap.evidenceRefs = [...new Set(gap.evidenceRefs.filter((id) => typeof id === "string" && known.has(id)))];
+        }
+      }
+      const r = SemanticSchema.safeParse(value);
       if (r.success) parsed = r.data;
       else lastError = r.error.issues.slice(0, 3).map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     } catch {

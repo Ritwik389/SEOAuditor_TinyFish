@@ -131,11 +131,12 @@ describe("Agent lifecycle", () => {
   it("cancels a known run on a local deadline and records acknowledged cancellation", async () => {
     mockFetch.mockResolvedValueOnce(reply({ run_id: "run-3" }))
       .mockResolvedValueOnce(reply({ status: "RUNNING", num_of_steps: 1 }))
+      .mockResolvedValueOnce(reply({ status: "RUNNING", num_of_steps: 1 }))
       .mockResolvedValueOnce(reply({ status: "CANCELLED" }));
     const lifecycle: AgentLifecycleEvent[] = [];
     await expect(verifyWithAgent("test-key", { url: "https://example.com", fetchText: "", deadlineMs: 10, pollIntervalMs: 1000, onRun: (event) => { lifecycle.push(event); } })).rejects.toMatchObject({ code: "AGENT_TIMEOUT" });
-    expect(mockFetch.mock.calls[2]![0]).toBe("https://agent.test/v1/runs/run-3/cancel");
-    expect(mockFetch.mock.calls[2]![1].method).toBe("POST");
+    expect(mockFetch.mock.calls[3]![0]).toBe("https://agent.test/v1/runs/run-3/cancel");
+    expect(mockFetch.mock.calls[3]![1].method).toBe("POST");
     expect(lifecycle.at(-1)?.payload.status).toBe("CANCELLED");
   });
 
@@ -151,10 +152,22 @@ describe("Agent lifecycle", () => {
   it("does not claim cancellation if the provider rejects cleanup", async () => {
     mockFetch.mockResolvedValueOnce(reply({ run_id: "run-5" }))
       .mockResolvedValueOnce(reply({ status: "RUNNING", steps: null, num_of_steps: null }))
+      .mockResolvedValueOnce(reply({ status: "RUNNING", steps: null, num_of_steps: null }))
       .mockResolvedValueOnce(reply({ error: { code: "SERVICE_BUSY", message: "Cleanup failed" } }, 503));
     const lifecycle: AgentLifecycleEvent[] = [];
     await expect(verifyWithAgent("test-key", { url: "https://example.com", fetchText: "", deadlineMs: 10, pollIntervalMs: 1000, onRun: (event) => { lifecycle.push(event); } })).rejects.toMatchObject({ code: "AGENT_TIMEOUT" });
     expect(lifecycle.map((event) => event.payload.status)).toEqual(["SUBMITTED", "RUNNING"]);
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(mockFetch).toHaveBeenCalledTimes(4);
+  });
+  it("recovers a validated result that completes at the local deadline, without creating or cancelling another run", async () => {
+    mockFetch.mockResolvedValueOnce(reply({ run_id: "run-boundary" }))
+      .mockResolvedValueOnce(reply({ status: "RUNNING", num_of_steps: 8 }))
+      .mockResolvedValueOnce(reply({ status: "COMPLETED", num_of_steps: 9, result: output() }));
+    const lifecycle: AgentLifecycleEvent[] = [];
+    const result = await verifyWithAgent("test-key", { url: "https://example.com/pricing", fetchText: "", deadlineMs: 10, pollIntervalMs: 1000, onRun: (event) => { lifecycle.push(event); } });
+    expect(result.status).toBe("COMPLETED");
+    expect(result.payload.answers).toHaveLength(1);
+    expect(mockFetch.mock.calls.map(([, init]) => init.method)).toEqual(["POST", "GET", "GET"]);
+    expect(lifecycle.at(-1)?.payload.status).toBe("COMPLETED");
   });
 });

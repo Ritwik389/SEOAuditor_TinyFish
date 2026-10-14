@@ -389,8 +389,7 @@ export async function runAudit(auditId: string, deps: Deps = defaultDeps): Promi
     else {
       try {
         const primary = queries[0]?.text ?? "(no query supplied)";
-        const r = await runSemanticAnalysis(provider, { auditId, query: primary, evidence: run.evidence, signal: run.ctl.signal });
-        run.calls.gemini += r.calls;
+        const r = await runSemanticAnalysis(provider, { auditId, query: primary, evidence: run.evidence, signal: run.ctl.signal, onCall: () => { run.calls.gemini++; } });
         findings = assignIds(auditId, [...det.findings, ...r.findings].map(({ findingId, ...rest }) => { void findingId; return { ...rest, origin: rest.origin }; }));
         if (gaps[0]) gaps = [mergeSemanticGap(gaps[0], r.output.gap), ...gaps.slice(1)];
         if (extraction) extraction = { ...extraction, entities: r.output.entities.map(({ name, type, excerpt }) => ({ name, type, excerpt })) };

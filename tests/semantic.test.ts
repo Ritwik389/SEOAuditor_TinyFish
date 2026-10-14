@@ -58,6 +58,22 @@ describe("semantic output verification", () => {
 });
 
 describe("runSemanticAnalysis", () => {
+  it("drops excessive unknown gap citations and deduplicates known IDs without discarding validated findings", async () => {
+    const value = out([finding()]);
+    value.gap.evidenceRefs = [...Array(10).fill("ev_fetch_1"), ...Array(10).fill("nonexistent")];
+    let calls = 0;
+    const provider: AnalysisProvider = { id: "t", model: "t", generateJson: async () => JSON.stringify(value) };
+    const r = await runSemanticAnalysis(provider, { auditId: "a1", query: "q", evidence: ev, onCall: () => { calls++; } });
+    expect(r.output.gap.evidenceRefs).toEqual(["ev_fetch_1"]);
+    expect(r.findings).toHaveLength(1);
+    expect(calls).toBe(1);
+  });
+  it("counts actual generation attempts even when the provider fails", async () => {
+    let calls = 0;
+    const provider: AnalysisProvider = { id: "t", model: "t", generateJson: async () => { throw new Error("Provider unavailable"); } };
+    await expect(runSemanticAnalysis(provider, { auditId: "a1", query: "q", evidence: ev, onCall: () => { calls++; } })).rejects.toThrow("Provider unavailable");
+    expect(calls).toBe(1);
+  });
   it("repairs once after invalid JSON, then succeeds", async () => {
     const replies = ["not json at all", JSON.stringify(out([finding()]))];
     let calls = 0;

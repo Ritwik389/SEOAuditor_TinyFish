@@ -137,6 +137,13 @@ export async function verifyWithAgent(apiKey: string, p: {
   if (p.signal?.aborted) abort();
   let runId: string | undefined;
   let terminal = false;
+  let lastState = "";
+  const record = async (state: Awaited<ReturnType<typeof getAgentRun>>) => {
+    const fingerprint = JSON.stringify(state.payload);
+    if (fingerprint === lastState) return;
+    lastState = fingerprint;
+    await p.onRun?.({ payload: state.payload, endpoint: "GET agent.tinyfish.ai/v1/runs/{id}", requestId: state.requestId, latencyMs: state.latencyMs });
+  };
   try {
     p.onCall?.("agent");
     const created = await createAgentRun(apiKey, { url: p.url, goal: objective, signal: ctl.signal });
@@ -145,7 +152,7 @@ export async function verifyWithAgent(apiKey: string, p: {
     while (!ctl.signal.aborted) {
       p.onCall?.("agentStatus");
       const state = await getAgentRun(apiKey, runId, { signal: ctl.signal });
-      await p.onRun?.({ payload: state.payload, endpoint: "GET agent.tinyfish.ai/v1/runs/{id}", requestId: state.requestId, latencyMs: state.latencyMs });
+      await record(state);
       terminal = ["COMPLETED", "FAILED", "CANCELLED"].includes(state.payload.status);
       if (state.payload.status === "COMPLETED") return { payload: normalizeAgentOutput(state.result, { url: p.url, objective, fetchText: p.fetchText, fetchComplete: p.fetchComplete }), runId, status: "COMPLETED", requestId: state.requestId };
       if (terminal) throw new TinyFishError(state.payload.error ?? `TinyFish Agent run ${state.payload.status.toLowerCase()}.`, 200, `AGENT_${state.payload.status}`, false, state.requestId);
@@ -153,7 +160,23 @@ export async function verifyWithAgent(apiKey: string, p: {
     }
     throw ctl.signal.reason;
   } catch (e) {
-    if (ctl.signal.aborted && !p.signal?.aborted) throw new TinyFishError("The Agent interaction check reached its time limit. Search and Fetch evidence is still available.", 0, "AGENT_TIMEOUT", false);
+    if (ctl.signal.aborted && !p.signal?.aborted) {
+      // A run can finish while the polling request hits our deadline. One
+      // bounded read recovers that terminal result, without starting another run.
+      let finalState: Awaited<ReturnType<typeof getAgentRun>> | undefined;
+      if (runId) {
+        try {
+          p.onCall?.("agentStatus");
+          const grace = AbortSignal.timeout(10000);
+          finalState = await getAgentRun(apiKey, runId, { signal: p.signal ? AbortSignal.any([p.signal, grace]) : grace });
+          await record(finalState);
+          terminal = ["COMPLETED", "FAILED", "CANCELLED"].includes(finalState.payload.status);
+        } catch { /* Normal timeout cleanup remains best effort. */ }
+      }
+      if (p.signal?.aborted) throw p.signal.reason;
+      if (runId && finalState?.payload.status === "COMPLETED") return { payload: normalizeAgentOutput(finalState.result, { url: p.url, objective, fetchText: p.fetchText, fetchComplete: p.fetchComplete }), runId, status: "COMPLETED", requestId: finalState.requestId };
+      throw new TinyFishError("The Agent interaction check reached its time limit. Search and Fetch evidence is still available.", 0, "AGENT_TIMEOUT", false);
+    }
     throw e;
   } finally {
     clearTimeout(timer);
