@@ -203,3 +203,4 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 | Audit shows “interrupted” | the function hit its time limit or restarted; press *Retry audit* |
 | Rate limited | wait the number of seconds shown; limits are per IP |
 # SEOAuditor_TinyFish
+# SEOAuditor_TinyFish
