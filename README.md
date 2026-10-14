@@ -1,15 +1,28 @@
-# Sniffsite
+# SEOAuditor
 
-**Your website has a scent. Can AI find it?**
+**Can AI read and find your page?**
 
-Sniffsite is an evidence-first AI search visibility auditor. For a page and (ideally) the query it should be found for, it:
+SEOAuditor is an evidence-first AI search visibility auditor. For a page and (ideally) the query it should be found for, it:
 
 1. **Searches** with TinyFish Search: does the page appear for the query, where, with what title and snippet?
 2. **Fetches** with TinyFish Fetch: what can an AI-oriented retrieval pipeline actually extract (text, headings, metadata, links)?
 3. **Verifies** with TinyFish Browser, only when there is a concrete question (empty/blocked/thin Fetch, or you turn it on).
 4. **Diagnoses** with deterministic checks plus a Gemini reading of the *collected evidence*, producing prioritized findings that each link to the evidence behind them.
+5. **Inspects interactions** when you opt in: TinyFish Agent opens relevant read-only FAQ controls or tabs; a separate Run Status endpoint records execution and returns the inspection. Quotes absent from Fetch are verification leads, not assumed proof of missing content.
 
 Results describe **sampled retrieval evidence** (one search, one fetch, one moment in time). They are not guaranteed Google rankings or statements about every crawler.
+
+## DTU additions
+
+The original repository UI and account/storage flows are preserved. The application is now called **SEOAuditor**, with the old logos, decorative branding and themed copy removed.
+
+- Readability × visibility diagnosis, measured query coverage and exact source passages an AI tool could cite.
+- Prioritized fixes with effort categories and verification steps; declared AI crawler restrictions remain evidence-based.
+- Opt-in Agent inspection and persisted Run Status: **four distinct TinyFish endpoints** contribute to a deep audit (Search, Fetch, Agent creation, Run Status). Browser remains independently available.
+- JSON evidence export without rerunning providers.
+- Three dated real-page Search/Fetch captures on `/demo`, alongside the original fictional examples. The **Audit this page now** action always starts a fresh audit.
+
+See [docs/DTU-SUBMISSION.md](docs/DTU-SUBMISSION.md) for the endpoint table, demo flow and reproducible multi-page live runner. `npm run demo:live` needs a shell `TINYFISH_API_KEY`; `DEMO_AGENT=1` additionally enables billable Agent inspection. Web accounts still use their own encrypted keys on Setup.
 
 ---
 
@@ -131,6 +144,7 @@ Browser ──HTTPS──▶ Next.js (App Router)
 ## Demo mode vs live mode
 
 * **Demo** (`/demo`, public): three fictional pages (SaaS pricing, e-commerce product, B2B service). They run through the *same analysis engine* from canned inputs, and are labelled “Demo · sample data” everywhere. They are never produced by live calls and never mixed into live data.
+* **Real-page captures** (`/examples/:slug`, public): Search/Fetch evidence from three real pages collected through TinyFish MCP on 14 October 2026. The date, excerpt cap and replay nature are explicit. Opening a capture does not contact the provider; its fresh-audit action does. Public captures are never inserted into account audit history.
 * **Live** (signed-in user with their own verified TinyFish key; needs the operator database): every audit makes real requests and stores what came back.
 
 If credentials are missing you are offered **Configure integrations** and **Explore sample report**.
@@ -140,8 +154,9 @@ If credentials are missing you are offered **Configure integrations** and **Expl
 ## Testing
 
 ```bash
-npm test              # 136 unit/integration tests; 1 more runs only with MONGODB_URI_TEST (real database)
-npm run test:e2e      # Playwright: needs Microsoft Edge installed (uses channel "msedge")
+npm test              # 186 unit/integration tests; 1 more runs only with MONGODB_URI_TEST (real database)
+npm run test:e2e      # Playwright: Microsoft Edge by default
+PLAYWRIGHT_CHANNEL=chrome npm run test:e2e # use installed Chrome instead
 ```
 
 Covered: URL normalization/validation/matching, SSRF (IPv4/IPv6 ranges, DNS, redirect handling), redaction, encryption, session tokens, rate limiting, adapters against mock HTTP (headers, params, normalization, retries, no-retry on auth/credits, abort), Gemini provider and test, Zod validation of model output (drop unsupported findings, discard non-verbatim excerpts, prompt-injection wrapping), deterministic checks and findings, prioritization, status transitions, orchestrator (partial failures, browser unavailable, semantic failure, idempotent claim, cancellation, stale audits), memory-store/Mongo parity. E2E: login/auth, CSRF, first-run setup, missing credentials, live audit, partial audit, cancel, retry, query proposal, demo, history/empty states, print view, mobile overflow, skip link.
@@ -161,15 +176,15 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 * **Access**: accounts with scrypt-hashed passwords, HMAC-signed `HttpOnly; SameSite=Strict; Secure` session cookie, generic sign-in errors (no account enumeration), Origin check on every write, per-IP rate limits (process-local; see limitations), 32 KB body cap, Zod validation on every body.
 * **Tenant isolation**: every audit/evidence/finding/settings/secret query is scoped by owner at the repository layer (internal callers must pass `null` explicitly), and foreign resources return 404, not 403.
 * **Untrusted content**: page text, metadata and snippets are treated as data. Fetched content is rendered as inert text (never HTML); only `http(s)` links become anchors, with `rel="noopener noreferrer nofollow"`. The model receives evidence wrapped in tagged data blocks with closing tags neutralized, has no tools or URL access, must cite real evidence IDs, and any quote not verbatim in the cited evidence is discarded.
-* **Not claimed**: Sniffsite makes no assertions about Google rankings, indexing status, AI training or crawler compliance beyond the observed directives.
+* **Not claimed**: SEOAuditor makes no assertions about Google rankings, indexing status, AI training or crawler compliance beyond the observed directives.
 
 ## Known limitations
 
-* Live TinyFish success is verified only against local mocks plus real-endpoint auth rejection (a key was not available): run `npm run smoke:live` with your key to verify Search/Fetch; Browser CDP driving (`playwright-core` `connectOverCDP`) is implemented per the docs but has not been exercised against a live session.
+* Search/Fetch were exercised on three real pages through TinyFish MCP. The HTTP adapters and Agent lifecycle were validated against local services. Run `SMOKE_AGENT=1 npm run smoke:live` with your own key for successful REST authentication and live four-endpoint verification; live Browser CDP remains account-dependent.
 * **PDF**: use *Print / Save as PDF* from the printable report (print stylesheet). No server-side PDF generator.
 * **Rate limiting** is per server process; on serverless each warm instance counts separately.
 * Broken-link testing, sitemap-index traversal and audit-to-audit comparison are not implemented. Structured data is only evaluated when Browser verification ran.
-* Fetch does not return HTTP status, headers or raw HTML; Sniffsite shows “Not provided by Fetch” rather than inferring.
+* Fetch does not return HTTP status, headers or raw HTML; SEOAuditor shows “Not provided by Fetch” rather than inferring.
 * Gemini model IDs follow the current Google docs at build time; adjust `GEMINI_MODELS` in `src/lib/config.ts` if they change.
 * Accounts are email + password only: no email verification, password reset or MFA yet. Do not rely on this for high-assurance use without adding them.
 
@@ -187,3 +202,4 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 | Browser “not enabled” | account entitlement/credits; audits still complete without verification |
 | Audit shows “interrupted” | the function hit its time limit or restarted; press *Retry audit* |
 | Rate limited | wait the number of seconds shown; limits are per IP |
+# SEOAuditor_TinyFish
