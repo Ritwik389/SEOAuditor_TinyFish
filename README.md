@@ -1,4 +1,3 @@
-```markdown
 # TraceSEO
 
 **Your website has a scent. Can AI find it?**
@@ -195,7 +194,5 @@ See [docs/DEPLOYMENT.md](https://www.google.com/search?q=docs/DEPLOYMENT.md).
 | Browser “not enabled” | account entitlement/credits; audits still complete without verification |
 | Audit shows “interrupted” | the function hit its time limit or restarted; press *Retry audit* |
 | Rate limited | wait the number of seconds shown; limits are per IP |
-
-```
 
 ```
